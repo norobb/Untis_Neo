@@ -1578,6 +1578,17 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) _runAutoUpdateCheck();
     });
+
+    if (widget.showTutorialOnStart) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() {
+          _showTutorial = true;
+          _tutorialStep = 0;
+          _selectedIndex = 0;
+        });
+      });
+    }
   }
 
   Future<void> _runAutoUpdateCheck() async {
@@ -1653,17 +1664,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       }
     } catch (_) {
       // Ignore errors silently
-    }
-  }
-    if (widget.showTutorialOnStart) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        setState(() {
-          _showTutorial = true;
-          _tutorialStep = 0;
-          _selectedIndex = 0;
-        });
-      });
     }
   }
 
