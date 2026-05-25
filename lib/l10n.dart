@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Untis+ App Localization
+// UntisNeo App Localization
 // Supported locales: de (German), en (English), fr (French), es (Spanish), el (Greek)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -507,11 +507,11 @@ class AppL10n {
           'Der 2FA-Code ist ungültig oder abgelaufen. Bitte versuche es erneut.',
       'loginVerifyButton': 'Verifizieren',
 
-      'onboardingWelcomeTitle': 'Willkommen bei Untis+',
+      'onboardingWelcomeTitle': 'Willkommen bei UntisNeo',
       'onboardingChooseLanguageSubtitle': 'Wähle deine bevorzugte Sprache',
       'onboardingAppearanceTitle': 'Erscheinungsbild',
       'onboardingAppearanceSubtitle':
-          'Gestalte Untis+ genau so, wie du es möchtest',
+          'Gestalte UntisNeo genau so, wie du es möchtest',
       'onboardingThemeSystem': 'System',
       'onboardingThemeLight': 'Hell',
       'onboardingThemeDark': 'Dunkel',
@@ -522,14 +522,14 @@ class AppL10n {
       'onboardingGeminiSubtitle':
           'Chatte mit deinem Stundenplan und deinen Hausaufgaben',
       'onboardingGeminiInfo':
-          'Hol dir einen kostenlosen Gemini API-Schlüssel in Google AI Studio, um den leistungsstarken KI-Assistenten in Untis+ freizuschalten.',
+          'Hol dir einen kostenlosen Gemini API-Schlüssel in Google AI Studio, um den leistungsstarken KI-Assistenten in UntisNeo freizuschalten.',
       'onboardingGeminiGetApiKey': 'API-Schlüssel holen',
       'onboardingSkip': 'Überspringen',
       'onboardingNext': 'Weiter',
       'onboardingGeminiEnterKeyOrSkip':
           'Bitte gib einen Schlüssel ein oder überspringe diesen Schritt',
       'onboardingReadyTitle': 'Bereit zum Start!',
-      'onboardingReadySubtitle': 'Das kannst du alles in Untis+ machen',
+      'onboardingReadySubtitle': 'Das kannst du alles in UntisNeo machen',
       'onboardingFeatureTimetableTitle': 'Stundenplan & Kalender',
       'onboardingFeatureTimetableDesc':
           'Behalte deinen Stundenplan perfekt im Blick.',
@@ -545,7 +545,7 @@ class AppL10n {
       'onboardingFinishSetup': 'Einrichtung abschließen',
       'onboardingUseDemoMode': 'Demo-Modus starten',
       'onboardingUseDemoModeDesc':
-          'Teste Untis+ ohne Schul-Login mit realistisch gefullten Beispieldaten.',
+          'Teste UntisNeo ohne Schul-Login mit realistisch gefullten Beispieldaten.',
       'tutorialTitle': 'Kurzes App-Tutorial',
       'tutorialSkip': 'Tutorial überspringen',
       'tutorialDone': 'Tutorial beenden',
@@ -563,7 +563,7 @@ class AppL10n {
           'Tippe auf den Einstellungs-Button, um Sprache, Design und Benachrichtigungen anzupassen.',
       'tutorialStepFinishTitle': 'Fertig!',
       'tutorialStepFinishDesc':
-          'Du kennst jetzt alle Hauptbereiche der App. Viel Spaß mit Untis+!',
+          'Du kennst jetzt alle Hauptbereiche der App. Viel Spaß mit UntisNeo!',
 
       'timetableTitle': 'Stundenplan',
       'timetablePrevWeek': 'Vorherige Woche',
@@ -927,7 +927,7 @@ Use "useThemeColors": true unless the prompt asks for specific colors.
       'settingsBackgroundLoading': 'Daten werden im Hintergrund geladen...',
       'settingsSectionUpdates': 'Updates',
       'settingsSectionAbout': 'Über die App',
-      'appName': 'Untis+',
+      'appName': 'UntisNeo',
       'settingsAppVersion': 'Version',
       'settingsBuild': 'Build',
       'settingsSectionSubjects': 'Fächer & Farben',
@@ -1030,10 +1030,10 @@ Use "useThemeColors": true unless the prompt asks for specific colors.
           'The 2FA code is invalid or expired. Please try again.',
       'loginVerifyButton': 'Verify',
 
-      'onboardingWelcomeTitle': 'Welcome to Untis+',
+      'onboardingWelcomeTitle': 'Welcome to UntisNeo',
       'onboardingChooseLanguageSubtitle': 'Choose your preferred language',
       'onboardingAppearanceTitle': 'Appearance',
-      'onboardingAppearanceSubtitle': 'Make Untis+ look exactly how you want',
+      'onboardingAppearanceSubtitle': 'Make UntisNeo look exactly how you want',
       'onboardingThemeSystem': 'System',
       'onboardingThemeLight': 'Light',
       'onboardingThemeDark': 'Dark',
@@ -1043,13 +1043,13 @@ Use "useThemeColors": true unless the prompt asks for specific colors.
       'onboardingGeminiTitle': 'Gemini AI',
       'onboardingGeminiSubtitle': 'Chat with your schedule and homework',
       'onboardingGeminiInfo':
-          'Get a free Gemini API key from Google AI Studio to unlock the powerful AI assistant in Untis+.',
+          'Get a free Gemini API key from Google AI Studio to unlock the powerful AI assistant in UntisNeo.',
       'onboardingGeminiGetApiKey': 'Get API Key',
       'onboardingSkip': 'Skip',
       'onboardingNext': 'Next',
       'onboardingGeminiEnterKeyOrSkip': 'Please enter a key or skip this step',
       'onboardingReadyTitle': 'Ready to go!',
-      'onboardingReadySubtitle': 'Here is what you can do in Untis+',
+      'onboardingReadySubtitle': 'Here is what you can do in UntisNeo',
       'onboardingFeatureTimetableTitle': 'Timetable & Calendar',
       'onboardingFeatureTimetableDesc': 'View your schedule flawlessly.',
       'onboardingFeatureExamsTitle': 'Exams & Homework',
@@ -1063,7 +1063,7 @@ Use "useThemeColors": true unless the prompt asks for specific colors.
       'onboardingFinishSetup': 'Finish Setup',
       'onboardingUseDemoMode': 'Start demo mode',
       'onboardingUseDemoModeDesc':
-          'Try Untis+ without school login using realistic sample data.',
+          'Try UntisNeo without school login using realistic sample data.',
       'tutorialTitle': 'Quick app tutorial',
       'tutorialSkip': 'Skip tutorial',
       'tutorialDone': 'Finish tutorial',
@@ -1081,7 +1081,7 @@ Use "useThemeColors": true unless the prompt asks for specific colors.
           'Tap the settings button to customize language, design and notifications.',
       'tutorialStepFinishTitle': 'Done!',
       'tutorialStepFinishDesc':
-          'You now know all core sections of the app. Have fun with Untis+!',
+          'You now know all core sections of the app. Have fun with UntisNeo!',
 
       'timetableTitle': 'Timetable',
       'timetablePrevWeek': 'Previous week',
@@ -1427,7 +1427,7 @@ Use "useThemeColors": true unless the prompt asks for specific colors.
       'settingsBackgroundLoading': 'Data is loading in the background...',
       'settingsSectionUpdates': 'Updates',
       'settingsSectionAbout': 'About',
-      'appName': 'Untis+',
+      'appName': 'UntisNeo',
       'settingsAppVersion': 'Version',
       'settingsBuild': 'Build',
       'settingsSectionSubjects': 'Subjects & Colors',
@@ -1533,11 +1533,11 @@ Use "useThemeColors": true unless the prompt asks for specific colors.
       'loginTwoFactorInvalid': 'Le code 2FA est invalide ou expiré. Réessaie.',
       'loginVerifyButton': 'Vérifier',
 
-      'onboardingWelcomeTitle': 'Bienvenue sur Untis+',
+      'onboardingWelcomeTitle': 'Bienvenue sur UntisNeo',
       'onboardingChooseLanguageSubtitle': 'Choisis ta langue préférée',
       'onboardingAppearanceTitle': 'Apparence',
       'onboardingAppearanceSubtitle':
-          'Personnalise Untis+ exactement comme tu veux',
+          'Personnalise UntisNeo exactement comme tu veux',
       'onboardingThemeSystem': 'Système',
       'onboardingThemeLight': 'Clair',
       'onboardingThemeDark': 'Sombre',
@@ -1549,13 +1549,13 @@ Use "useThemeColors": true unless the prompt asks for specific colors.
       'onboardingGeminiSubtitle':
           'Discute avec ton emploi du temps et tes devoirs',
       'onboardingGeminiInfo':
-          'Obtiens une clé API Gemini gratuite depuis Google AI Studio pour débloquer le puissant assistant IA dans Untis+.',
+          'Obtiens une clé API Gemini gratuite depuis Google AI Studio pour débloquer le puissant assistant IA dans UntisNeo.',
       'onboardingGeminiGetApiKey': 'Obtenir une clé API',
       'onboardingSkip': 'Passer',
       'onboardingNext': 'Suivant',
       'onboardingGeminiEnterKeyOrSkip': 'Saisis une clé ou passe cette étape',
       'onboardingReadyTitle': 'Prêt à commencer !',
-      'onboardingReadySubtitle': 'Voici ce que tu peux faire dans Untis+',
+      'onboardingReadySubtitle': 'Voici ce que tu peux faire dans UntisNeo',
       'onboardingFeatureTimetableTitle': 'Emploi du temps & Calendrier',
       'onboardingFeatureTimetableDesc': 'Consulte ton planning sans effort.',
       'onboardingFeatureExamsTitle': 'Examens & Devoirs',
@@ -1569,7 +1569,7 @@ Use "useThemeColors": true unless the prompt asks for specific colors.
       'onboardingFinishSetup': 'Terminer la configuration',
       'onboardingUseDemoMode': 'Lancer le mode démo',
       'onboardingUseDemoModeDesc':
-          'Teste Untis+ sans connexion école avec des données réalistes.',
+          'Teste UntisNeo sans connexion école avec des données réalistes.',
       'tutorialTitle': 'Tutoriel rapide de l\'app',
       'tutorialSkip': 'Passer le tutoriel',
       'tutorialDone': 'Terminer le tutoriel',
@@ -1587,7 +1587,7 @@ Use "useThemeColors": true unless the prompt asks for specific colors.
           'Appuie sur le bouton paramètres pour ajuster la langue, le design et les notifications.',
       'tutorialStepFinishTitle': 'Terminé !',
       'tutorialStepFinishDesc':
-          'Tu connais maintenant toutes les zones principales de l\'app. Amuse-toi avec Untis+ !',
+          'Tu connais maintenant toutes les zones principales de l\'app. Amuse-toi avec UntisNeo !',
 
       'timetableTitle': 'Emploi du temps',
       'timetablePrevWeek': 'Semaine précédente',
@@ -1906,7 +1906,7 @@ Use "useThemeColors": true unless the prompt asks for specific colors.
           'Charge immédiatement les dernières données du cache API et met à jour widget et push',
       'settingsBackgroundLoading': 'Les données se chargent en arrière-plan...',
       'settingsSectionAbout': 'À propos',
-      'appName': 'Untis+',
+      'appName': 'UntisNeo',
       'settingsAppVersion': 'Version',
       'settingsBuild': 'Build',
       'settingsSectionSubjects': 'Matières & Couleurs',
@@ -2012,11 +2012,11 @@ Use "useThemeColors": true unless the prompt asks for specific colors.
           'El código 2FA no es válido o ha caducado. Inténtalo de nuevo.',
       'loginVerifyButton': 'Verificar',
 
-      'onboardingWelcomeTitle': 'Bienvenido a Untis+',
+      'onboardingWelcomeTitle': 'Bienvenido a UntisNeo',
       'onboardingChooseLanguageSubtitle': 'Elige tu idioma preferido',
       'onboardingAppearanceTitle': 'Apariencia',
       'onboardingAppearanceSubtitle':
-          'Haz que Untis+ se vea exactamente como quieres',
+          'Haz que UntisNeo se vea exactamente como quieres',
       'onboardingThemeSystem': 'Sistema',
       'onboardingThemeLight': 'Claro',
       'onboardingThemeDark': 'Oscuro',
@@ -2026,13 +2026,13 @@ Use "useThemeColors": true unless the prompt asks for specific colors.
       'onboardingGeminiTitle': 'Gemini IA',
       'onboardingGeminiSubtitle': 'Chatea con tu horario y tus deberes',
       'onboardingGeminiInfo':
-          'Obtén una clave API gratuita de Gemini en Google AI Studio para desbloquear el potente asistente IA en Untis+.',
+          'Obtén una clave API gratuita de Gemini en Google AI Studio para desbloquear el potente asistente IA en UntisNeo.',
       'onboardingGeminiGetApiKey': 'Obtener clave API',
       'onboardingSkip': 'Saltar',
       'onboardingNext': 'Continuar',
       'onboardingGeminiEnterKeyOrSkip': 'Introduce una clave o salta este paso',
       'onboardingReadyTitle': 'Listo para empezar',
-      'onboardingReadySubtitle': 'Esto es lo que puedes hacer en Untis+',
+      'onboardingReadySubtitle': 'Esto es lo que puedes hacer en UntisNeo',
       'onboardingFeatureTimetableTitle': 'Horario y Calendario',
       'onboardingFeatureTimetableDesc':
           'Consulta tu horario sin complicaciones.',
@@ -2048,7 +2048,7 @@ Use "useThemeColors": true unless the prompt asks for specific colors.
       'onboardingFinishSetup': 'Finalizar configuración',
       'onboardingUseDemoMode': 'Iniciar modo demo',
       'onboardingUseDemoModeDesc':
-          'Prueba Untis+ sin inicio escolar con datos de ejemplo realistas.',
+          'Prueba UntisNeo sin inicio escolar con datos de ejemplo realistas.',
       'tutorialTitle': 'Tutorial rápido de la app',
       'tutorialSkip': 'Saltar tutorial',
       'tutorialDone': 'Finalizar tutorial',
@@ -2066,7 +2066,7 @@ Use "useThemeColors": true unless the prompt asks for specific colors.
           'Toca el botón de configuración para ajustar idioma, diseño y notificaciones.',
       'tutorialStepFinishTitle': '¡Listo!',
       'tutorialStepFinishDesc':
-          'Ya conoces todas las áreas principales de la app. ¡Disfruta Untis+!',
+          'Ya conoces todas las áreas principales de la app. ¡Disfruta UntisNeo!',
 
       'timetableTitle': 'Horario',
       'timetablePrevWeek': 'Semana anterior',
@@ -2385,7 +2385,7 @@ Use "useThemeColors": true unless the prompt asks for specific colors.
       'settingsBackgroundLoading':
           'Los datos se están cargando en segundo plano...',
       'settingsSectionAbout': 'Acerca de',
-      'appName': 'Untis+',
+      'appName': 'UntisNeo',
       'settingsAppVersion': 'Versión',
       'settingsBuild': 'Build',
       'settingsSectionSubjects': 'Asignaturas & Colores',
@@ -2488,11 +2488,11 @@ Use "useThemeColors": true unless the prompt asks for specific colors.
           'Ο κωδικός 2FA δεν είναι έγκυρος ή έχει λήξει. Δοκίμασε ξανά.',
       'loginVerifyButton': 'Επαλήθευση',
 
-      'onboardingWelcomeTitle': 'Καλώς ήρθες στο Untis+',
+      'onboardingWelcomeTitle': 'Καλώς ήρθες στο UntisNeo',
       'onboardingChooseLanguageSubtitle': 'Επίλεξε τη γλώσσα που προτιμάς',
       'onboardingAppearanceTitle': 'Εμφάνιση',
       'onboardingAppearanceSubtitle':
-          'Κάνε το Untis+ να μοιάζει ακριβώς όπως θέλεις',
+          'Κάνε το UntisNeo να μοιάζει ακριβώς όπως θέλεις',
       'onboardingThemeSystem': 'Σύστημα',
       'onboardingThemeLight': 'Φωτεινό',
       'onboardingThemeDark': 'Σκοτεινό',
@@ -2504,14 +2504,14 @@ Use "useThemeColors": true unless the prompt asks for specific colors.
       'onboardingGeminiSubtitle':
           'Συζήτησε με το ωρολόγιό σου και τις εργασίες σου',
       'onboardingGeminiInfo':
-          'Πάρε ένα δωρεάν κλειδί Gemini API από το Google AI Studio για να ξεκλειδώσεις τον ισχυρό βοηθό AI στο Untis+.',
+          'Πάρε ένα δωρεάν κλειδί Gemini API από το Google AI Studio για να ξεκλειδώσεις τον ισχυρό βοηθό AI στο UntisNeo.',
       'onboardingGeminiGetApiKey': 'Λήψη κλειδιού API',
       'onboardingSkip': 'Παράλειψη',
       'onboardingNext': 'Επόμενο',
       'onboardingGeminiEnterKeyOrSkip':
           'Εισήγαγε ένα κλειδί ή παράλειψε αυτό το βήμα',
       'onboardingReadyTitle': 'Έτοιμο για εκκίνηση!',
-      'onboardingReadySubtitle': 'Να τι μπορείς να κάνεις στο Untis+',
+      'onboardingReadySubtitle': 'Να τι μπορείς να κάνεις στο UntisNeo',
       'onboardingFeatureTimetableTitle': 'Ωρολόγιο & Ημερολόγιο',
       'onboardingFeatureTimetableDesc':
           'Παρακολούθησε το πρόγραμμα σου χωρίς κόπο.',
@@ -2527,7 +2527,7 @@ Use "useThemeColors": true unless the prompt asks for specific colors.
       'onboardingFinishSetup': 'Ολοκλήρωση ρύθμισης',
       'onboardingUseDemoMode': 'Εκκίνηση demo mode',
       'onboardingUseDemoModeDesc':
-          'Δοκίμασε το Untis+ χωρίς σύνδεση σχολείου με ρεαλιστικά δείγματα δεδομένων.',
+          'Δοκίμασε το UntisNeo χωρίς σύνδεση σχολείου με ρεαλιστικά δείγματα δεδομένων.',
       'tutorialTitle': 'Σύντομο tutorial εφαρμογής',
       'tutorialSkip': 'Παράλειψη tutorial',
       'tutorialDone': 'Ολοκλήρωση tutorial',
@@ -2545,7 +2545,7 @@ Use "useThemeColors": true unless the prompt asks for specific colors.
           'Πάτησε το κουμπί ρυθμίσεων για να προσαρμόσεις γλώσσα, εμφάνιση και ειδοποιήσεις.',
       'tutorialStepFinishTitle': 'Έτοιμο!',
       'tutorialStepFinishDesc':
-          'Γνωρίζεις πλέον όλα τα βασικά μέρη της εφαρμογής. Καλή χρήση του Untis+!',
+          'Γνωρίζεις πλέον όλα τα βασικά μέρη της εφαρμογής. Καλή χρήση του UntisNeo!',
 
       'timetableTitle': 'Ωρολόγιο',
       'timetablePrevWeek': 'Προηγούμενη εβδομάδα',
@@ -2868,7 +2868,7 @@ Use "useThemeColors": true unless the prompt asks for specific colors.
       'settingsBackgroundLoading': 'Τα δεδομένα φορτώνονται στο παρασκήνιο...',
       'settingsSectionUpdates': 'Ενημερώσεις',
       'settingsSectionAbout': 'Σχετικά',
-      'appName': 'Untis+',
+      'appName': 'UntisNeo',
       'settingsAppVersion': 'Έκδοση',
       'settingsBuild': 'Build',
       'settingsSectionSubjects': 'Μαθήματα & Χρώματα',

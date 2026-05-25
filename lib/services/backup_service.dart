@@ -90,7 +90,7 @@ class BackupService {
       'schemaVersion': schemaVersion,
       'createdAt': DateTime.now().toUtc().toIso8601String(),
       'app': <String, dynamic>{
-        'name': 'Untis+',
+        'name': 'UntisNeo',
         'version': version,
         'build': build,
       },

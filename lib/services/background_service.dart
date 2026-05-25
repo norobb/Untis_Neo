@@ -76,16 +76,16 @@ int _compareVersionStrings(String current, String latest) {
 String _localizedUpdateTitle(String locale) {
   switch (locale) {
     case 'en':
-      return 'Untis+ Update available';
+      return 'UntisNeo Update available';
     case 'fr':
-      return 'Mise a jour Untis+ disponible';
+      return 'Mise a jour UntisNeo disponible';
     case 'es':
-      return 'Actualizacion de Untis+ disponible';
+      return 'Actualizacion de UntisNeo disponible';
     case 'el':
-      return 'Διαθεσιμη ενημερωση Untis+';
+      return 'Διαθεσιμη ενημερωση UntisNeo';
     case 'de':
     default:
-      return 'Untis+ Update verfugbar';
+      return 'UntisNeo Update verfugbar';
   }
 }
 
