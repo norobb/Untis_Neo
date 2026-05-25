@@ -588,7 +588,7 @@ Future<void> checkGithubUpdateAndNotify() async {
   try {
     final resp = await http.get(
       Uri.parse(
-        'https://api.github.com/repos/ninocss/UntisPlus/releases/latest',
+        'https://api.github.com/repos/norobb/Untis_Neo/releases/latest',
       ),
       headers: const {'Accept': 'application/vnd.github+json'},
     );

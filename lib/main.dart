@@ -7535,7 +7535,7 @@ class _SettingsPageState extends State<SettingsPage> {
     try {
       final resp = await http.get(
         Uri.parse(
-          'https://api.github.com/repos/ninocss/UntisPlus/releases/latest',
+          'https://api.github.com/repos/norobb/Untis_Neo/releases/latest',
         ),
         headers: const {'Accept': 'application/vnd.github+json'},
       );
@@ -7551,7 +7551,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
       final tag = (data['tag_name'] ?? '').toString().trim();
       final htmlUrl =
-          (data['html_url'] ?? 'https://github.com/ninocss/UntisPlus/releases')
+          (data['html_url'] ?? 'https://github.com/norobb/Untis_Neo/releases')
               .toString();
       final assets = (data['assets'] is List)
           ? data['assets'] as List<dynamic>
@@ -8944,7 +8944,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           ),
                           onTap: () {
                             url_launcher.launchUrlString(
-                              'https://github.com/ninocss/UntisPlus/releases',
+                              'https://github.com/norobb/Untis_Neo/releases',
                               mode: url_launcher.LaunchMode.externalApplication,
                             );
                           },

@@ -931,10 +931,10 @@ Use "useThemeColors": true unless the prompt asks for specific colors.
       'settingsAppVersion': 'Version',
       'settingsBuild': 'Build',
       'settingsSectionSubjects': 'Fächer & Farben',
-      'settingsGithubRepoLabel': 'github.com/ninocss/UntisPlus',
+      'settingsGithubRepoLabel': 'github.com/norobb/Untis_Neo',
       'settingsGithubUpdateCheck': 'Nach Updates im GitHub-Repo suchen',
       'settingsGithubUpdateCheckDesc':
-          'Prüft das neueste Release von ninocss/UntisPlus.',
+          'Prüft das neueste Release von norobb/Untis_Neo.',
       'settingsGithubDirectDownload': 'Neueste Version direkt herunterladen',
       'settingsGithubDirectDownloadDesc':
           'Beim Prüfen wird die neueste APK/Release-Datei sofort geöffnet.',
@@ -1431,10 +1431,10 @@ Use "useThemeColors": true unless the prompt asks for specific colors.
       'settingsAppVersion': 'Version',
       'settingsBuild': 'Build',
       'settingsSectionSubjects': 'Subjects & Colors',
-      'settingsGithubRepoLabel': 'github.com/ninocss/UntisPlus',
+      'settingsGithubRepoLabel': 'github.com/norobb/Untis_Neo',
       'settingsGithubUpdateCheck': 'Check for updates on GitHub',
       'settingsGithubUpdateCheckDesc':
-          'Checks the latest release from ninocss/UntisPlus.',
+          'Checks the latest release from norobb/Untis_Neo.',
       'settingsGithubDirectDownload': 'Download latest version directly',
       'settingsGithubDirectDownloadDesc':
           'When checking, immediately opens the newest APK/release file.',
@@ -1910,10 +1910,10 @@ Use "useThemeColors": true unless the prompt asks for specific colors.
       'settingsAppVersion': 'Version',
       'settingsBuild': 'Build',
       'settingsSectionSubjects': 'Matières & Couleurs',
-      'settingsGithubRepoLabel': 'github.com/ninocss/UntisPlus',
+      'settingsGithubRepoLabel': 'github.com/norobb/Untis_Neo',
       'settingsGithubUpdateCheck': 'Rechercher des mises à jour sur GitHub',
       'settingsGithubUpdateCheckDesc':
-          'Vérifie la dernière version de ninocss/UntisPlus.',
+          'Vérifie la dernière version de norobb/Untis_Neo.',
       'settingsGithubDirectDownload':
           'Télécharger directement la dernière version',
       'settingsGithubDirectDownloadDesc':
@@ -2389,10 +2389,10 @@ Use "useThemeColors": true unless the prompt asks for specific colors.
       'settingsAppVersion': 'Versión',
       'settingsBuild': 'Build',
       'settingsSectionSubjects': 'Asignaturas & Colores',
-      'settingsGithubRepoLabel': 'github.com/ninocss/UntisPlus',
+      'settingsGithubRepoLabel': 'github.com/norobb/Untis_Neo',
       'settingsGithubUpdateCheck': 'Buscar actualizaciones en GitHub',
       'settingsGithubUpdateCheckDesc':
-          'Comprueba la última versión de ninocss/UntisPlus.',
+          'Comprueba la última versión de norobb/Untis_Neo.',
       'settingsGithubDirectDownload':
           'Descargar directamente la versión más reciente',
       'settingsGithubDirectDownloadDesc':
@@ -2872,10 +2872,10 @@ Use "useThemeColors": true unless the prompt asks for specific colors.
       'settingsAppVersion': 'Έκδοση',
       'settingsBuild': 'Build',
       'settingsSectionSubjects': 'Μαθήματα & Χρώματα',
-      'settingsGithubRepoLabel': 'github.com/ninocss/UntisPlus',
+      'settingsGithubRepoLabel': 'github.com/norobb/Untis_Neo',
       'settingsGithubUpdateCheck': 'Έλεγχος για ενημερώσεις στο GitHub',
       'settingsGithubUpdateCheckDesc':
-          'Ελέγχει την πιο πρόσφατη έκδοση από το ninocss/UntisPlus.',
+          'Ελέγχει την πιο πρόσφατη έκδοση από το norobb/Untis_Neo.',
       'settingsGithubDirectDownload':
           'Λήψη της πιο πρόσφατης έκδοσης απευθείας',
       'settingsGithubDirectDownloadDesc':
