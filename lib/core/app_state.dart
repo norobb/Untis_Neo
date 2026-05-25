@@ -15,7 +15,7 @@ String mistralApiKey = "";
 String customAiApiKey = "";
 
 String aiProvider = 'gemini';
-String aiModel = 'gemini-2.5-flash';
+String aiModel = 'gemini-3.5-flash';
 String aiSystemPromptTemplate = '';
 String aiCustomBaseUrl = '';
 String aiCustomCompatibility = 'openai';
@@ -53,12 +53,12 @@ List<String> _modelsForProvider(
     case 'custom':
       if (_normalizeAiCustomCompatibility(customCompatibility ?? 'openai') ==
           'gemini') {
-        return const ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash'];
+        return const ['gemini-3.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash'];
       }
       return const ['gpt-4o-mini', 'gpt-4o', 'mistral-small-latest'];
     case 'gemini':
     default:
-      return const ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash'];
+      return const ['gemini-3.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash'];
   }
 }
 

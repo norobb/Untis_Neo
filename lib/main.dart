@@ -21,6 +21,8 @@ import 'package:otp_auth/otp_auth.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'l10n.dart';
 import 'core/time_utils.dart';
+import 'screens/homework_screen.dart';
+import 'screens/grades_screen.dart';
 import 'services/notification_service.dart';
 import 'services/background_service.dart';
 import 'services/backup_service.dart';

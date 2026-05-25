@@ -26,6 +26,8 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
   Timer? _typingHintTimer;
   int _typingHintIndex = 0;
   final List<Map<String, String>> _messages = [];
+  String? _selectedImageBase64;
+  XFile? _selectedImageFile;
   List<Map<String, dynamic>> _exams = [];
   Map<int, List<dynamic>> _weekData = {
     0: <dynamic>[],
@@ -597,11 +599,20 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
     }) async {
       final contents = _messages.map((m) {
         final role = (m['role'] == 'user') ? 'user' : 'model';
+        final parts = <Map<String, dynamic>>[
+          {'text': m['content'] ?? ''},
+        ];
+        if (m.containsKey('image_base64') && m['image_base64']!.isNotEmpty) {
+           parts.add({
+             'inlineData': {
+               'mimeType': 'image/jpeg',
+               'data': m['image_base64']
+             }
+           });
+        }
         return {
           'role': role,
-          'parts': [
-            {'text': m['content'] ?? ''},
-          ],
+          'parts': parts,
         };
       }).toList();
 
@@ -852,7 +863,13 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
 
     _inputController.clear();
     setState(() {
-      _messages.add({'role': 'user', 'content': text});
+      _messages.add({
+        'role': 'user', 
+        'content': text, 
+        if (_selectedImageBase64 != null) 'image_base64': _selectedImageBase64!
+      });
+      _selectedImageBase64 = null;
+      _selectedImageFile = null;
       _thinking = true;
       _typingHintIndex = 0;
     });
@@ -1269,56 +1286,89 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
           borderRadius: BorderRadius.circular(28),
           border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.35)),
         ),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            IconButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      appLocaleNotifier.value.toLowerCase().startsWith('de')
-                          ? 'Anhänge kommen in einem späteren Schritt.'
-                          : 'Attachments will be added in a later step.',
+            if (_selectedImageFile != null)
+              Stack(
+                children: [
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 8, left: 8),
+                    height: 80,
+                    width: 80,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      image: DecorationImage(
+                        image: FileImage(File(_selectedImageFile!.path)),
+                        fit: BoxFit.cover,
+                      ),
                     ),
-                    behavior: SnackBarBehavior.floating,
                   ),
-                );
-              },
-              icon: const Icon(Icons.attach_file_rounded),
-              tooltip: appLocaleNotifier.value.toLowerCase().startsWith('de')
-                  ? 'Anhang'
-                  : 'Attachment',
-            ),
-            Expanded(
-              child: TextField(
-                controller: _inputController,
-                textInputAction: TextInputAction.send,
-                onSubmitted: (_) => _send(),
-                style: GoogleFonts.outfit(fontSize: 15),
-                decoration: InputDecoration(
-                  hintText: AppL10n.of(appLocaleNotifier.value).aiInputHint,
-                  hintStyle: GoogleFonts.outfit(
-                    color: cs.onSurface.withValues(alpha: 0.38),
-                  ),
-                  filled: true,
-                  fillColor: Colors.transparent,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(22),
-                    borderSide: BorderSide.none,
+                  Positioned(
+                    top: -8,
+                    right: -8,
+                    child: IconButton(
+                      icon: const Icon(Icons.cancel, color: Colors.white, size: 20),
+                      onPressed: () => setState(() {
+                        _selectedImageFile = null;
+                        _selectedImageBase64 = null;
+                      }),
+                    ),
+                  )
+                ]
+              ),
+            Row(
+              children: [
+                IconButton(
+                  onPressed: () async {
+                    final picker = ImagePicker();
+                    final picked = await picker.pickImage(source: ImageSource.gallery);
+                    if (picked != null) {
+                      final bytes = await picked.readAsBytes();
+                      setState(() {
+                        _selectedImageFile = picked;
+                        _selectedImageBase64 = base64Encode(bytes);
+                      });
+                    }
+                  },
+                  icon: const Icon(Icons.attach_file_rounded),
+                  tooltip: appLocaleNotifier.value.toLowerCase().startsWith('de')
+                      ? 'Bild anhängen'
+                      : 'Attach Image',
+                ),
+                Expanded(
+                  child: TextField(
+                    controller: _inputController,
+                    textInputAction: TextInputAction.send,
+                    onSubmitted: (_) => _send(),
+                    style: GoogleFonts.outfit(fontSize: 15),
+                    decoration: InputDecoration(
+                      hintText: AppL10n.of(appLocaleNotifier.value).aiInputHint,
+                      hintStyle: GoogleFonts.outfit(
+                        color: cs.onSurface.withValues(alpha: 0.38),
+                      ),
+                      filled: true,
+                      fillColor: Colors.transparent,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(22),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            AnimatedOpacity(
-              opacity: _thinking ? 0.4 : 1.0,
-              duration: const Duration(milliseconds: 200),
-              child: FloatingActionButton.small(
-                onPressed: _thinking ? null : _send,
-                heroTag: null,
-                child: Icon(_thinking ? Icons.hourglass_top_rounded : Icons.send_rounded),
-              ),
+                const SizedBox(width: 8),
+                AnimatedOpacity(
+                  opacity: _thinking ? 0.4 : 1.0,
+                  duration: const Duration(milliseconds: 200),
+                  child: FloatingActionButton.small(
+                    onPressed: _thinking ? null : _send,
+                    heroTag: null,
+                    child: Icon(_thinking ? Icons.hourglass_top_rounded : Icons.send_rounded),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -1509,6 +1559,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   void initState() {
     super.initState();
     _loadPrefs();
+    
+    // Request notification permissions for background updates
+    NotificationService().requestPermissions();
+
     _notificationActionSub = NotificationService().actionEvents.listen(
       _handleNotificationAction,
     );
@@ -1519,6 +1573,88 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         _handleNotificationAction(pending);
       });
     }
+    
+    // Auto update check delay
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) _runAutoUpdateCheck();
+    });
+  }
+
+  Future<void> _runAutoUpdateCheck() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      final currentVersion = info.version;
+
+      final resp = await http.get(
+        Uri.parse('https://api.github.com/repos/ninocss/UntisPlus/releases/latest'),
+        headers: const {'Accept': 'application/vnd.github+json'},
+      );
+      if (resp.statusCode != 200) return;
+
+      final data = jsonDecode(resp.body);
+      final tag = (data['tag_name'] ?? '').toString().trim();
+      
+      List<int> extractVersionParts(String input) {
+        final cleaned = input.trim().replaceFirst(RegExp(r'^[vV]'), '');
+        final matches = RegExp(r'\d+').allMatches(cleaned);
+        if (matches.isEmpty) return const [0];
+        return matches.map((m) => int.tryParse(m.group(0) ?? '0') ?? 0).toList();
+      }
+
+      final currentParts = extractVersionParts(currentVersion);
+      final latestParts = extractVersionParts(tag);
+      final maxLen = math.max(currentParts.length, latestParts.length);
+      int comp = 0;
+      for (var i = 0; i < maxLen; i++) {
+        final a = i < currentParts.length ? currentParts[i] : 0;
+        final b = i < latestParts.length ? latestParts[i] : 0;
+        if (a != b) {
+          comp = a.compareTo(b);
+          break;
+        }
+      }
+
+      if (comp < 0) {
+        if (!mounted) return;
+        final htmlUrl = (data['html_url'] ?? 'https://github.com/ninocss/UntisPlus/releases').toString();
+        
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text(
+              appLocaleNotifier.value.toLowerCase().startsWith('de') 
+                ? 'Update verfügbar' 
+                : 'Update available'
+            ),
+            content: Text(
+              appLocaleNotifier.value.toLowerCase().startsWith('de')
+                ? 'Eine neue Version ($tag) von UntisPlus ist verfügbar. Möchtest du sie herunterladen?'
+                : 'A new version ($tag) of UntisPlus is available. Do you want to download it?'
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(
+                  appLocaleNotifier.value.toLowerCase().startsWith('de') ? 'Später' : 'Later'
+                ),
+              ),
+              FilledButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  url_launcher.launchUrlString(htmlUrl, mode: url_launcher.LaunchMode.externalApplication);
+                },
+                child: Text(
+                  appLocaleNotifier.value.toLowerCase().startsWith('de') ? 'Aktualisieren' : 'Update'
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (_) {
+      // Ignore errors silently
+    }
+  }
     if (widget.showTutorialOnStart) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
@@ -1633,9 +1769,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   List<Widget> get _pages => <Widget>[
     WeeklyTimetablePage(key: ValueKey(sessionID)),
     const ExamsPage(),
-    const SchoolNotificationsPage(),
-    const SettingsHubPage(),
-    AiAssistantPage(
+    const HomeworkScreen(), // Index 2
+    const GradesScreen(), // Index 3
+    const SchoolNotificationsPage(), // Index 4
+    const SettingsHubPage(), // Index 5
+    AiAssistantPage( // Index 6
       key: ValueKey(sessionID),
       onBackToTimetable: () => _onNavTap(0),
     ),
@@ -1883,11 +2021,29 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                         const SizedBox(width: 4),
                         _navIconBtn(
                           cs: cs,
+                          icon: Icons.book_outlined,
+                          selectedIcon: Icons.book,
+                          label: 'Hausaufgaben',
+                          selected: _selectedIndex == 2,
+                          onTap: () => _onNavTap(2),
+                        ),
+                        const SizedBox(width: 4),
+                        _navIconBtn(
+                          cs: cs,
+                          icon: Icons.calculate_outlined,
+                          selectedIcon: Icons.calculate,
+                          label: 'Noten',
+                          selected: _selectedIndex == 3,
+                          onTap: () => _onNavTap(3),
+                        ),
+                        const SizedBox(width: 4),
+                        _navIconBtn(
+                          cs: cs,
                           icon: Icons.campaign_outlined,
                           selectedIcon: Icons.campaign_rounded,
                           label: l.navInfo,
-                          selected: _selectedIndex == 2,
-                          onTap: () => _onNavTap(2),
+                          selected: _selectedIndex == 4,
+                          onTap: () => _onNavTap(4),
                           tutorialHighlight: _isTutorialTarget(2),
                         ),
                         const SizedBox(width: 4),
@@ -1896,8 +2052,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                           icon: Icons.settings_outlined,
                           selectedIcon: Icons.settings_rounded,
                           label: l.navMenu,
-                          selected: _selectedIndex == 3,
-                          onTap: () => _onNavTap(3),
+                          selected: _selectedIndex == 5,
+                          onTap: () => _onNavTap(5),
                           tutorialHighlight: _isTutorialTarget(3),
                         ),
                         const SizedBox(width: 4),
@@ -1906,8 +2062,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                           icon: Icons.auto_awesome_outlined,
                           selectedIcon: Icons.auto_awesome_rounded,
                           label: l.navAi,
-                          selected: _selectedIndex == 4,
-                          onTap: () => _onNavTap(4),
+                          selected: _selectedIndex == 6,
+                          onTap: () => _onNavTap(6),
                         ),
                       ],
                     ),
