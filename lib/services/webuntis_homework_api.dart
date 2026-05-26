@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import '../core/app_state.dart' as app_state;
+import '../main.dart' as app_state;
 
 class Homework {
   final String id;
