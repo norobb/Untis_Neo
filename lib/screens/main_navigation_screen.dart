@@ -29,6 +29,7 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
   String? _selectedImageBase64;
   XFile? _selectedImageFile;
   List<Map<String, dynamic>> _exams = [];
+  List<Homework> _homeworks = [];
   Map<int, List<dynamic>> _weekData = {
     0: <dynamic>[],
     1: <dynamic>[],
@@ -390,6 +391,15 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
       _exams = exams;
       _loading = false;
     });
+
+    try {
+      final hw = await WebUntisHomeworkApi.fetchHomeworks();
+      if (mounted) {
+        setState(() {
+          _homeworks = hw;
+        });
+      }
+    } catch (_) {}
   }
 
   String _contextBannerText() {
@@ -526,6 +536,7 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
       '[day_summary_tomorrow]': _daySummaryForPrompt(DateTime.now().add(const Duration(days: 1))),
       '[timetable]': _formatWeekForAi(_weekData, _currentMonday),
       '[timetable_json]': jsonEncode(_jsonSafeValue(_weekData)),
+      '[homeworks]': _homeworks.map((h) => 'Fach: , Bis: , Erledigt: , Aufgabe: ').join('; '),
       '[exams]': _formatExamsForAi(),
       '[exams_json]': jsonEncode(_jsonSafeValue(_exams)),
     };

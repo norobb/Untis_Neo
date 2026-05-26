@@ -11,6 +11,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
+import 'services/webuntis_homework_api.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -6478,7 +6479,24 @@ class _SchoolNotificationsPageState extends State<SchoolNotificationsPage> {
                   '')
               .toString()
               .trim();
-      if (title.isEmpty && body.isEmpty) continue;
+              
+      String _stripHtml(String htmlString) {
+        var stripped = htmlString.replaceAll(RegExp(r'<br[^>]*>', multiLine: true, caseSensitive: false), '\n');
+        stripped = stripped.replaceAll(RegExp(r'<p[^>]*>', multiLine: true, caseSensitive: false), '\n');
+        stripped = stripped.replaceAll(RegExp(r'<[^>]*>', multiLine: true, caseSensitive: false), '');
+        stripped = stripped.replaceAll('&nbsp;', ' ');
+        stripped = stripped.replaceAll('&amp;', '&');
+        stripped = stripped.replaceAll('&lt;', '<');
+        stripped = stripped.replaceAll('&gt;', '>');
+        stripped = stripped.replaceAll('&quot;', '"');
+        stripped = stripped.replaceAll('&#39;', "'");
+        return stripped.trim();
+      }
+              
+      final cleanTitle = _stripHtml(title);
+      final cleanBody = _stripHtml(body);
+              
+      if (cleanTitle.isEmpty && cleanBody.isEmpty) continue;
 
       final id =
           (map['id'] ?? map['messageId'] ?? map['uuid'] ?? '$title-$body')
@@ -9597,3 +9615,5 @@ class HiddenSubjectsPage extends StatelessWidget {
     );
   }
 }
+
+

@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart' as app_state;
 
 class Homework {
@@ -19,21 +18,13 @@ class Homework {
   });
 
   factory Homework.fromJson(Map<String, dynamic> json) {
-    final dueDateInt = json['dueDate'] as int? ?? 0;
-    String dueDateStr = "";
-    if (dueDateInt > 0) {
-      final dYear = dueDateInt ~/ 10000;
-      final dMonth = (dueDateInt ~/ 100) % 100;
-      final dDay = dueDateInt % 100;
-      dueDateStr = "$dYear-${dMonth.toString().padLeft(2, '0')}-${dDay.toString().padLeft(2, '0')}";
-    }
-
+    // Handled in API logic directly
     return Homework(
-      id: json['id']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString(),
-      subjectCode: "N/A", // We can enhance this by matching with lessonIds later
-      description: json['text']?.toString() ?? "",
-      dueDate: dueDateStr,
-      isDone: json['completed'] == true,
+      id: "0",
+      subjectCode: "",
+      description: "",
+      dueDate: "",
+      isDone: false,
     );
   }
 }
@@ -50,12 +41,9 @@ class WebUntisHomeworkApi {
     }
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final user = prefs.getString('username') ?? '';
-      final pass = prefs.getString('password') ?? '';
-
-      if (user.isEmpty || pass.isEmpty) {
-        throw Exception("Keine Zugangsdaten gefunden.");
+      final sessionId = app_state.sessionID;
+      if (sessionId.isEmpty) {
+        throw Exception("Keine aktive Session. Bitte aktualisiere den Stundenplan.");
       }
 
       var cleanServerUrl = app_state.schoolUrl.trim();
@@ -63,96 +51,109 @@ class WebUntisHomeworkApi {
       if (cleanServerUrl.contains("/")) {
         cleanServerUrl = cleanServerUrl.split("/")[0];
       }
-      
-      final schoolEnc = Uri.encodeComponent(app_state.schoolName);
-      final baseUrl = "https://$cleanServerUrl/WebUntis/jsonrpc.do?school=$schoolEnc";
 
-      // 1. Authenticate
-      final authReq = {
-        "id": "auth",
-        "method": "authenticate",
-        "params": {
-          "user": user,
-          "password": pass,
-          "client": "WebUntis"
-        },
-        "jsonrpc": "2.0"
-      };
-
-      final client = http.Client();
-      final authResponse = await client.post(
-        Uri.parse(baseUrl),
-        headers: {
-          "Content-Type": "application/json",
-          "User-Agent": _clientAgent,
-        },
-        body: jsonEncode(authReq),
-      );
-
-      if (authResponse.statusCode != 200) {
-        throw Exception("HTTP-Fehler beim Login.");
+      String encodedSchoolName() {
+        try {
+          return '_${base64Encode(utf8.encode(app_state.schoolName))}';
+        } catch (_) {
+          return app_state.schoolName;
+        }
       }
 
-      final authBody = jsonDecode(authResponse.body);
-      if (authBody['error'] != null) {
-        throw Exception("WebUntis Fehler: ${authBody['error']['message']}");
+      final schoolCookieCandidates = <String>{
+        encodedSchoolName(),
+        app_state.schoolName,
+      }.where((e) => e.isNotEmpty).toList(growable: false);
+
+      Map<String, String> buildHeaders(String schoolCookie) {
+        return {
+          'Cookie': 'JSESSIONID=$sessionId; schoolname=$schoolCookie',
+          'Accept': 'application/json',
+          'User-Agent': _clientAgent,
+        };
       }
 
-      // Calculate Dates (from -7 days to +30 days)
       final now = DateTime.now();
       final monday = now.subtract(Duration(days: now.weekday - 1));
       final start = monday.subtract(const Duration(days: 7));
       final end = start.add(const Duration(days: 30));
 
-      final startDate = start.year * 10000 + start.month * 100 + start.day;
-      final endDate = end.year * 10000 + end.month * 100 + end.day;
+      final startStr = "${start.year}-${start.month.toString().padLeft(2, '0')}-${start.day.toString().padLeft(2, '0')}";
+      final endStr = "${end.year}-${end.month.toString().padLeft(2, '0')}-${end.day.toString().padLeft(2, '0')}";
 
-      // 2. Fetch Homework
-      final hwReq = {
-        "id": "hw",
-        "method": "getHomeWork2017",
-        "params": {
-          "id": app_state.personId,
-          "type": "STUDENT",
-          "startDate": startDate,
-          "endDate": endDate
-        },
-        "jsonrpc": "2.0"
-      };
+      final timetableUrl = Uri.parse("https://$cleanServerUrl/WebUntis/api/rest/view/v1/timetable/entries?start=$startStr&end=$endStr&format=8&resourceType=STUDENT&resources=${app_state.personId}&timetableType=MY_TIMETABLE");
 
-      final hwResponse = await client.post(
-        Uri.parse(baseUrl),
-        headers: {
-          "Content-Type": "application/json",
-          "User-Agent": _clientAgent,
-        },
-        body: jsonEncode(hwReq),
-      );
+      http.Response? tResp;
+      String? workingCookie;
 
-      final hwBody = jsonDecode(hwResponse.body);
-      if (hwBody['error'] != null) {
-        throw Exception("WebUntis Fehler: ${hwBody['error']['message']}");
+      for (final cookie in schoolCookieCandidates) {
+        try {
+          final res = await http.get(timetableUrl, headers: buildHeaders(cookie));
+          if (res.statusCode == 200) {
+            tResp = res;
+            workingCookie = cookie;
+            break;
+          }
+        } catch (_) {}
       }
 
-      final records = hwBody['result']?['records'] as List? ?? hwBody['result'] as List? ?? [];
-      final List<Homework> homeworkList = records.map((r) => Homework.fromJson(r as Map<String, dynamic>)).toList();
+      if (tResp == null || workingCookie == null) {
+        throw Exception("Stundenplan-Abruf für Hausaufgaben fehlgeschlagen.");
+      }
 
-      // Logout
-      await client.post(
-        Uri.parse(baseUrl),
-        headers: {
-          "Content-Type": "application/json",
-          "User-Agent": _clientAgent,
-        },
-        body: jsonEncode({
-          "id": "logout",
-          "method": "logout",
-          "params": {},
-          "jsonrpc": "2.0"
-        }),
-      );
+      final tData = jsonDecode(tResp.body);
+      final days = tData['data']?['days'] as List? ?? [];
+      final List<Homework> homeworkList = [];
+      final Set<int> processedHomeworkIds = {};
 
-      client.close();
+      for (final day in days) {
+        final gridEntries = day['gridEntries'] as List? ?? [];
+        for (final entry in gridEntries) {
+          final icons = entry['icons'] as List? ?? [];
+          if (icons.contains('HOMEWORK')) {
+            final duration = entry['duration'] as Map? ?? {};
+            final startDateTime = duration['start'] ?? '';
+            final endDateTime = duration['end'] ?? '';
+
+            if (startDateTime.isNotEmpty && endDateTime.isNotEmpty) {
+              final sEnc = Uri.encodeComponent("$startDateTime:00");
+              final eEnc = Uri.encodeComponent("$endDateTime:00");
+              final detailUrl = Uri.parse("https://$cleanServerUrl/WebUntis/api/rest/view/v2/calendar-entry/detail?elementId=${app_state.personId}&elementType=5&endDateTime=$eEnc&startDateTime=$sEnc&homeworkOption=DUE");
+
+              try {
+                final dResp = await http.get(detailUrl, headers: buildHeaders(workingCookie));
+                if (dResp.statusCode == 200) {
+                  final dData = jsonDecode(dResp.body);
+                  final cEntries = dData['calendarEntries'] as List? ?? [];
+                  if (cEntries.isNotEmpty) {
+                    final cEntry = cEntries[0];
+                    final subjectCode = cEntry['subject']?['displayName']?.toString() ?? 'N/A';
+                    final homeworks = cEntry['homeworks'] as List? ?? [];
+                    
+                    for (final hw in homeworks) {
+                      final hwId = hw['id'] as int? ?? 0;
+                      if (!processedHomeworkIds.contains(hwId)) {
+                        processedHomeworkIds.add(hwId);
+                        final due = hw['dueDateTime']?.toString() ?? '';
+                        final dueParsed = due.contains('T') ? due.split('T').first : due;
+                        
+                        homeworkList.add(Homework(
+                          id: hwId.toString(),
+                          subjectCode: subjectCode,
+                          description: hw['text']?.toString() ?? '',
+                          dueDate: dueParsed,
+                          isDone: hw['completed'] == true,
+                        ));
+                      }
+                    }
+                  }
+                }
+              } catch (_) {}
+            }
+          }
+        }
+      }
+
       return homeworkList;
 
     } catch (e) {
