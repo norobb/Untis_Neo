@@ -885,6 +885,7 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
     _scrollToBottom();
 
     try {
+      await _loadContext();
       final reply = await _requestProviderResponse(_resolvedSystemPrompt());
       setState(() {
         _messages.add({'role': 'assistant', 'content': reply});
@@ -1960,7 +1961,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            TweenAnimationBuilder<double>(
+            Flexible(
+              child: TweenAnimationBuilder<double>(
               tween: Tween(begin: 0.0, end: 1.0),
               duration: const Duration(milliseconds: 560),
               curve: _kSmoothBounce,
@@ -2006,8 +2008,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                         ),
                       ],
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
                       children: [
                         _navIconBtn(
                           cs: cs,
@@ -2065,7 +2070,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                           selected: _selectedIndex == 6,
                           onTap: () => _onNavTap(6),
                         ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
