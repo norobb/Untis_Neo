@@ -2088,6 +2088,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 ),
               ),
             ),
+            ),
 
             const SizedBox(width: 14),
 
@@ -2344,3 +2345,4 @@ class _BouncyButtonState extends State<_BouncyButton>
     );
   }
 }
+
