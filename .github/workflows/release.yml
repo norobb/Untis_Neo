@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  build_android:
     name: Build & Release APK
     runs-on: ubuntu-latest
 
@@ -41,5 +41,37 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: build/app/outputs/flutter-apk/UntisNeo.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build_ios:
+    name: Build & Release iOS IPA
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build iOS App
+        run: flutter build ios --release --no-codesign
+
+      - name: Create IPA
+        run: |
+          mkdir Payload
+          cp -r build/ios/iphoneos/Runner.app Payload/
+          zip -r UntisNeo-iOS.ipa Payload
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: UntisNeo-iOS.ipa
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
