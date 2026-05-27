@@ -60,6 +60,7 @@ Future<void> _settingsSetProgressivePush(bool value) async {
       kCurrentLessonNotificationId,
     );
   } else {
+    await NotificationService().requestPermissions();
     updateUntisData().catchError((_) {});
   }
 }
@@ -73,6 +74,7 @@ Future<void> _settingsSetDailyBriefingPush(bool value) async {
       kDailyBriefingNotificationId,
     );
   } else {
+    await NotificationService().requestPermissions();
     updateUntisData().catchError((_) {});
   }
 }
@@ -81,6 +83,9 @@ Future<void> _settingsSetImportantChangesPush(bool value) async {
   importantChangesPushNotifier.value = value;
   final prefs = await SharedPreferences.getInstance();
   await prefs.setBool('importantChangesPush', value);
+  if (value) {
+    await NotificationService().requestPermissions();
+  }
 }
 
 Future<void> _settingsSetDemoMode(BuildContext context, bool enabled) async {

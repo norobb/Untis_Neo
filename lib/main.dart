@@ -12,6 +12,9 @@ import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'services/webuntis_homework_api.dart';
+import 'services/webuntis_exams_api.dart';
+import 'services/webuntis_absences_api.dart';
+import 'screens/absences_page.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -59,6 +62,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (!kIsWeb) {
     await NotificationService().init();
+    await NotificationService().requestPermissions();
     BackgroundService.initialize();
   }
 
@@ -1892,7 +1896,7 @@ class _WeeklyTimetablePageState extends State<WeeklyTimetablePage>
           builder: (context, constraints) {
             final availableForDays = math.max(
               5 * minDayColWidth,
-              constraints.maxWidth - timeColWidth - 6 - (dayColGap * 4),
+              constraints.maxWidth - timeColWidth - 6 - (dayColGap * 5),
             );
             final dayColWidth = availableForDays / 5;
 
@@ -3335,51 +3339,12 @@ class _ExamsPageState extends State<ExamsPage> {
   }
 
   Future<void> _fetchApiExams() async {
-    if (demoModeNotifier.value) {
-      _apiExams = DemoModeService.demoExams();
-      return;
+    final results = await WebUntisExamsApi.fetchExams();
+    if (mounted) {
+      setState(() {
+        _apiExams = results;
+      });
     }
-    if (sessionID.isEmpty) return;
-    final now = DateTime.now();
-    final start = now.subtract(const Duration(days: 14));
-    final end = now.add(const Duration(days: 90));
-    final startStr = DateFormat('yyyyMMdd').format(start);
-    final endStr = DateFormat('yyyyMMdd').format(end);
-    final headers = {
-      'Cookie': 'JSESSIONID=$sessionID; schoolname=$schoolName',
-      'Accept': 'application/json',
-    };
-
-    Future<List<Map<String, dynamic>>> tryEndpoint(String path) async {
-      try {
-        final uri = Uri.parse(
-          'https://$schoolUrl$path?startDate=$startStr&endDate=$endStr',
-        );
-        final res = await http.get(uri, headers: headers);
-        if (res.statusCode == 200) {
-          final decoded = jsonDecode(res.body);
-          List<dynamic> list = [];
-          if (decoded is List) {
-            list = decoded;
-          } else if (decoded is Map) {
-            list =
-                (decoded['data'] ?? decoded['exams'] ?? decoded['result'] ?? [])
-                    as List;
-          }
-          return list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
-        }
-      } catch (_) {}
-      return [];
-    }
-
-    var results = await tryEndpoint('/WebUntis/api/exams');
-    if (results.isEmpty) {
-      results = await tryEndpoint('/WebUntis/api/classreg/exams');
-    }
-    if (results.isEmpty && personId != 0) {
-      results = await tryEndpoint('/WebUntis/api/exams/student/$personId');
-    }
-    _apiExams = results;
   }
 
   List<Map<String, dynamic>> get _allExams {
@@ -6480,21 +6445,46 @@ class _SchoolNotificationsPageState extends State<SchoolNotificationsPage> {
               .toString()
               .trim();
               
-      String _stripHtml(String htmlString) {
-        var stripped = htmlString.replaceAll(RegExp(r'<br[^>]*>', multiLine: true, caseSensitive: false), '\n');
-        stripped = stripped.replaceAll(RegExp(r'<p[^>]*>', multiLine: true, caseSensitive: false), '\n');
-        stripped = stripped.replaceAll(RegExp(r'<[^>]*>', multiLine: true, caseSensitive: false), '');
-        stripped = stripped.replaceAll('&nbsp;', ' ');
-        stripped = stripped.replaceAll('&amp;', '&');
-        stripped = stripped.replaceAll('&lt;', '<');
-        stripped = stripped.replaceAll('&gt;', '>');
-        stripped = stripped.replaceAll('&quot;', '"');
-        stripped = stripped.replaceAll('&#39;', "'");
-        return stripped.trim();
+      String formatBody(String htmlString) {
+        if (htmlString.isEmpty) return "";
+        
+        // Convert basic layout tags to newlines
+        var md = htmlString.replaceAll(RegExp(r'<br[^>]*>', multiLine: true, caseSensitive: false), '\n');
+        md = md.replaceAll(RegExp(r'<(p|div|tr|li)[^>]*>', multiLine: true, caseSensitive: false), '\n');
+        
+        // Convert basic formatting to Markdown
+        md = md.replaceAll(RegExp(r'<(b|strong)[^>]*>', multiLine: true, caseSensitive: false), '**');
+        md = md.replaceAll(RegExp(r'</(b|strong)>', multiLine: true, caseSensitive: false), '**');
+        md = md.replaceAll(RegExp(r'<(i|em)[^>]*>', multiLine: true, caseSensitive: false), '*');
+        md = md.replaceAll(RegExp(r'</(i|em)>', multiLine: true, caseSensitive: false), '*');
+        
+        // Remove all other tags
+        md = md.replaceAll(RegExp(r'<[^>]*>', multiLine: true, caseSensitive: false), '');
+        
+        // Decode common HTML entities
+        md = md
+            .replaceAll('&nbsp;', ' ')
+            .replaceAll('&amp;', '&')
+            .replaceAll('&lt;', '<')
+            .replaceAll('&gt;', '>')
+            .replaceAll('&quot;', '"')
+            .replaceAll('&#39;', "'")
+            .replaceAll('&auml;', 'ä')
+            .replaceAll('&Auml;', 'Ä')
+            .replaceAll('&ouml;', 'ö')
+            .replaceAll('&Ouml;', 'Ö')
+            .replaceAll('&uuml;', 'ü')
+            .replaceAll('&Uuml;', 'Ü')
+            .replaceAll('&szlig;', 'ß');
+            
+        // Final cleanup of excessive whitespace
+        md = md.replaceAll(RegExp(r'\n{3,}'), '\n\n');
+        
+        return md.trim();
       }
               
-      final cleanTitle = _stripHtml(title);
-      final cleanBody = _stripHtml(body);
+      final cleanTitle = formatBody(title);
+      final cleanBody = formatBody(body);
               
       if (cleanTitle.isEmpty && cleanBody.isEmpty) continue;
 
@@ -6517,10 +6507,10 @@ class _SchoolNotificationsPageState extends State<SchoolNotificationsPage> {
       items.add(
         _SchoolNotificationItem(
           id: id,
-          title: title.isEmpty
+          title: cleanTitle.isEmpty
               ? AppL10n.of(appLocaleNotifier.value).infoTitle
-              : title,
-          body: body,
+              : cleanTitle,
+          body: cleanBody,
           date: dt,
           author:
               (map['author'] ?? map['createdBy'] ?? map['publisher'] ?? '')
@@ -6645,6 +6635,18 @@ class _SchoolNotificationsPageState extends State<SchoolNotificationsPage> {
                         ),
                       ),
                       IconButton(
+                        tooltip: 'Abwesenheiten',
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const AbsencesPage(),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.person_off_rounded),
+                      ),
+                      IconButton(
                         tooltip: l.infoReload,
                         onPressed: _reload,
                         icon: const Icon(Icons.refresh_rounded),
@@ -6728,12 +6730,14 @@ class _SchoolNotificationsPageState extends State<SchoolNotificationsPage> {
                             ),
                             if (item.body.isNotEmpty) ...[
                               const SizedBox(height: 8),
-                              Text(
-                                item.body,
-                                style: GoogleFonts.outfit(
-                                  fontSize: 14,
-                                  color: cs.onSurfaceVariant,
-                                  height: 1.35,
+                              MarkdownBody(
+                                data: item.body,
+                                styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                                  p: GoogleFonts.outfit(
+                                    fontSize: 14,
+                                    color: cs.onSurfaceVariant,
+                                    height: 1.35,
+                                  ),
                                 ),
                               ),
                             ],
@@ -9615,5 +9619,7 @@ class HiddenSubjectsPage extends StatelessWidget {
     );
   }
 }
+
+
 
 

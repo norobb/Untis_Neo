@@ -64,9 +64,7 @@ class UntisPlusApp extends StatelessWidget {
                     pageTransitionsTheme: const PageTransitionsTheme(
                       builders: {
                         TargetPlatform.android: _BouncyPageTransitionsBuilder(),
-                        TargetPlatform.iOS: _BouncyPageTransitionsBuilder(),
                         TargetPlatform.windows: _BouncyPageTransitionsBuilder(),
-                        TargetPlatform.macOS: _BouncyPageTransitionsBuilder(),
                         TargetPlatform.linux: _BouncyPageTransitionsBuilder(),
                       },
                     ),

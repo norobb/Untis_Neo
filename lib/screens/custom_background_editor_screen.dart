@@ -1814,8 +1814,9 @@ class _CustomBackgroundEditorScreenState
                                   WidgetsBinding.instance.addPostFrameCallback((
                                     _,
                                   ) {
-                                    if (mounted)
+                                    if (mounted) {
                                       _scrollToSection(_editSectionKey);
+                                    }
                                   });
                                 } else if (choice == 'duplicate') {
                                   final duplicated = duplicateCustomBackground(
@@ -2614,3 +2615,4 @@ class _CustomBackgroundEditorScreenState
     );
   }
 }
+

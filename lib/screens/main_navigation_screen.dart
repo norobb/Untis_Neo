@@ -40,7 +40,7 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
   DateTime _currentMonday = DateTime.now();
   bool _loading = true;
   bool _thinking = false;
-  bool _showTypingHint = false;
+  final bool _showTypingHint = false;
   bool _showBanner = true;
   bool _bannerExpanded = false;
   String _loadedHistoryDate = '';
@@ -536,7 +536,7 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
       '[day_summary_tomorrow]': _daySummaryForPrompt(DateTime.now().add(const Duration(days: 1))),
       '[timetable]': _formatWeekForAi(_weekData, _currentMonday),
       '[timetable_json]': jsonEncode(_jsonSafeValue(_weekData)),
-      '[homeworks]': _homeworks.map((h) => 'Fach: , Bis: , Erledigt: , Aufgabe: ').join('; '),
+      '[homeworks]': _homeworks.map((h) => 'Fach: ${h.subjectLongName.isNotEmpty ? h.subjectLongName : h.subjectCode}, Bis: ${h.dueDate}, Erledigt: ${h.isDone ? "Ja" : "Nein"}, Aufgabe: ${h.description}${h.remark.isNotEmpty ? " (Hinweis: ${h.remark})" : ""}').join('; '),
       '[exams]': _formatExamsForAi(),
       '[exams_json]': jsonEncode(_jsonSafeValue(_exams)),
     };
@@ -566,7 +566,7 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
             customCompatibility: aiCustomCompatibility,
           );
 
-    String _normalizedBaseUrl(String value) {
+    String normalizedBaseUrl(String value) {
       var out = value.trim();
       while (out.endsWith('/')) {
         out = out.substring(0, out.length - 1);
@@ -574,8 +574,8 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
       return out;
     }
 
-    String _openAiCompatibleEndpoint(String rawBaseUrl) {
-      final base = _normalizedBaseUrl(rawBaseUrl);
+    String openAiCompatibleEndpoint(String rawBaseUrl) {
+      final base = normalizedBaseUrl(rawBaseUrl);
       if (base.isEmpty) return '';
       if (base.endsWith('/chat/completions')) return base;
       if (base.endsWith('/v1')) return '$base/chat/completions';
@@ -583,8 +583,8 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
       return '$base/v1/chat/completions';
     }
 
-    String _geminiCompatibleEndpoint(String rawBaseUrl, String model) {
-      final base = _normalizedBaseUrl(rawBaseUrl);
+    String geminiCompatibleEndpoint(String rawBaseUrl, String model) {
+      final base = normalizedBaseUrl(rawBaseUrl);
       if (base.isEmpty) return '';
       if (base.contains('/models/')) return base;
       if (base.contains('/v1beta')) return '$base/models/$model:generateContent';
@@ -592,7 +592,7 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
       return '$base/v1beta/models/$model:generateContent';
     }
 
-    List<Map<String, String>> _historyForProvider() {
+    List<Map<String, String>> historyForProvider() {
       return _messages
           .map(
             (m) => {
@@ -603,7 +603,7 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
           .toList();
     }
 
-    Future<String> _requestGeminiResponse({
+    Future<String> requestGeminiResponse({
       required String endpoint,
       required String apiKey,
       required String systemPrompt,
@@ -679,7 +679,7 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
       return reply;
     }
 
-    Future<String> _requestOpenAiCompatibleResponse({
+    Future<String> requestOpenAiCompatibleResponse({
       required String endpoint,
       required String apiKey,
       required String model,
@@ -687,7 +687,7 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
     }) async {
       final messages = [
         {'role': 'system', 'content': systemPrompt},
-        ..._historyForProvider(),
+        ...historyForProvider(),
       ];
 
       final body = jsonEncode({
@@ -753,14 +753,14 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
 
     switch (provider) {
       case 'openai':
-        return _requestOpenAiCompatibleResponse(
+        return requestOpenAiCompatibleResponse(
           endpoint: 'https://api.openai.com/v1/chat/completions',
           apiKey: apiKey,
           model: model,
           systemPrompt: systemPrompt,
         );
       case 'mistral':
-        return _requestOpenAiCompatibleResponse(
+        return requestOpenAiCompatibleResponse(
           endpoint: 'https://api.mistral.ai/v1/chat/completions',
           apiKey: apiKey,
           model: model,
@@ -773,21 +773,21 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
         }
         final compat = _normalizeAiCustomCompatibility(aiCustomCompatibility);
         if (compat == 'gemini') {
-          return _requestGeminiResponse(
-            endpoint: _geminiCompatibleEndpoint(baseUrl, model),
+          return requestGeminiResponse(
+            endpoint: geminiCompatibleEndpoint(baseUrl, model),
             apiKey: apiKey,
             systemPrompt: systemPrompt,
           );
         }
-        return _requestOpenAiCompatibleResponse(
-          endpoint: _openAiCompatibleEndpoint(baseUrl),
+        return requestOpenAiCompatibleResponse(
+          endpoint: openAiCompatibleEndpoint(baseUrl),
           apiKey: apiKey,
           model: model,
           systemPrompt: systemPrompt,
         );
       case 'gemini':
       default:
-        return _requestGeminiResponse(
+        return requestGeminiResponse(
           endpoint:
               'https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent',
           apiKey: apiKey,
@@ -877,7 +877,7 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
       _messages.add({
         'role': 'user', 
         'content': text, 
-        if (_selectedImageBase64 != null) 'image_base64': _selectedImageBase64!
+        'image_base64': ?_selectedImageBase64
       });
       _selectedImageBase64 = null;
       _selectedImageFile = null;

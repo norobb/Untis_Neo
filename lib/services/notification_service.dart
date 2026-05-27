@@ -98,12 +98,6 @@ class NotificationService {
       _onNotificationResponse(launchResponse);
     }
 
-    _flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >()
-        ?.requestNotificationsPermission();
-
     _initialized = true;
   }
 

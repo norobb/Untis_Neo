@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../services/webuntis_homework_api.dart';
-import '../main.dart'; // To access shared UI components like _glassContainer if they are public, but they are private inside main.dart part 'shared_ui.dart'
+import 'package:untisplus/services/webuntis_homework_api.dart';
+ // To access shared UI components like _glassContainer if they are public, but they are private inside main.dart part 'shared_ui.dart'
 // Wait, _glassContainer is private in main.dart?
 // I need to check if they are exposed. For now, I will use standard Flutter blur or see how main_navigation_screen uses it.
 import 'dart:ui';
 
 class HomeworkScreen extends StatefulWidget {
-  const HomeworkScreen({Key? key}) : super(key: key);
+  const HomeworkScreen({super.key});
 
   @override
   State<HomeworkScreen> createState() => _HomeworkScreenState();
@@ -52,10 +52,10 @@ class _HomeworkScreenState extends State<HomeworkScreen> {
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Container(
           decoration: BoxDecoration(
-            color: cs.surface.withOpacity(0.65),
+            color: cs.surface.withValues(alpha: 0.65),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: cs.outlineVariant.withOpacity(0.4),
+              color: cs.outlineVariant.withValues(alpha: 0.4),
               width: 1,
             ),
           ),
@@ -64,6 +64,64 @@ class _HomeworkScreenState extends State<HomeworkScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildRemainingDaysChip(String dueDate) {
+    try {
+      final due = DateTime.parse(dueDate);
+      final now = DateTime.now();
+      final diff = due.difference(DateTime(now.year, now.month, now.day)).inDays;
+      final cs = Theme.of(context).colorScheme;
+
+      Color bgColor;
+      Color textColor;
+      String text;
+
+      if (diff < 0) {
+        bgColor = cs.errorContainer.withValues(alpha: 0.5);
+        textColor = cs.onErrorContainer;
+        text = 'Überfällig';
+      } else if (diff == 0) {
+        bgColor = Colors.orange.withValues(alpha: 0.2);
+        textColor = Colors.orange;
+        text = 'Heute';
+      } else if (diff == 1) {
+        bgColor = Colors.orange.withValues(alpha: 0.1);
+        textColor = Colors.orange;
+        text = 'Morgen';
+      } else {
+        bgColor = cs.secondaryContainer.withValues(alpha: 0.3);
+        textColor = cs.onSecondaryContainer;
+        text = 'In $diff Tagen';
+      }
+
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          text,
+          style: GoogleFonts.outfit(
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            color: textColor,
+          ),
+        ),
+      );
+    } catch (_) {
+      return const SizedBox.shrink();
+    }
+  }
+
+  String _formatDate(String dateStr) {
+    try {
+      final dt = DateTime.parse(dateStr);
+      return '${dt.day.toString().padLeft(2, '0')}.${dt.month.toString().padLeft(2, '0')}.${dt.year}';
+    } catch (_) {
+      return dateStr;
+    }
   }
 
   @override
@@ -134,17 +192,29 @@ class _HomeworkScreenState extends State<HomeworkScreen> {
                               children: [
                                 Checkbox(
                                   value: hw.isDone,
-                                  onChanged: (v) {
-                                    // Local state update only for now
-                                    setState(() {
-                                      _homeworks[index] = Homework(
-                                        id: hw.id,
-                                        subjectCode: hw.subjectCode,
-                                        description: hw.description,
-                                        dueDate: hw.dueDate,
-                                        isDone: v ?? false,
-                                      );
-                                    });
+                                  onChanged: (v) async {
+                                    final bool success = await WebUntisHomeworkApi.setHomeworkDone(hw.id, v ?? false);
+                                    if (success) {
+                                      setState(() {
+                                        _homeworks[index] = Homework(
+                                          id: hw.id,
+                                          subjectCode: hw.subjectCode,
+                                          subjectLongName: hw.subjectLongName,
+                                          teacherName: hw.teacherName,
+                                          description: hw.description,
+                                          remark: hw.remark,
+                                          dueDate: hw.dueDate,
+                                          isDone: v ?? false,
+                                          attachmentsCount: hw.attachmentsCount,
+                                        );
+                                      });
+                                    } else {
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('Fehler beim Aktualisieren der Hausaufgabe')),
+                                        );
+                                      }
+                                    }
                                   },
                                 ),
                                 const SizedBox(width: 8),
@@ -152,38 +222,96 @@ class _HomeworkScreenState extends State<HomeworkScreen> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        hw.subjectCode,
-                                        style: GoogleFonts.outfit(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
-                                          color: cs.primary,
-                                        ),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              hw.subjectLongName.isNotEmpty ? hw.subjectLongName : hw.subjectCode,
+                                              style: GoogleFonts.outfit(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16,
+                                                color: cs.primary,
+                                              ),
+                                            ),
+                                          ),
+                                          if (hw.dueDate.isNotEmpty)
+                                            _buildRemainingDaysChip(hw.dueDate),
+                                        ],
                                       ),
-                                      const SizedBox(height: 4),
+                                      if (hw.teacherName.isNotEmpty)
+                                        Padding(
+                                          padding: const EdgeInsets.only(top: 2.0),
+                                          child: Text(
+                                            hw.teacherName,
+                                            style: GoogleFonts.outfit(
+                                              fontSize: 13,
+                                              color: cs.onSurfaceVariant,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
+                                      const SizedBox(height: 8),
                                       Text(
                                         hw.description,
                                         style: GoogleFonts.outfit(
-                                          fontSize: 14,
+                                          fontSize: 15,
                                           color: cs.onSurface,
                                           decoration: hw.isDone ? TextDecoration.lineThrough : null,
                                         ),
                                       ),
+                                      if (hw.remark.isNotEmpty) ...[
+                                        const SizedBox(height: 8),
+                                        Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: cs.secondaryContainer.withValues(alpha: 0.3),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Icon(Icons.info_outline, size: 14, color: cs.secondary),
+                                              const SizedBox(width: 6),
+                                              Expanded(
+                                                child: Text(
+                                                  hw.remark,
+                                                  style: GoogleFonts.outfit(
+                                                    fontSize: 12,
+                                                    fontStyle: FontStyle.italic,
+                                                    color: cs.onSecondaryContainer,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
                                       const SizedBox(height: 8),
-                                      if (hw.dueDate.isNotEmpty)
-                                        Row(
-                                          children: [
-                                            Icon(Icons.calendar_today, size: 14, color: cs.onSurfaceVariant),
-                                            const SizedBox(width: 4),
+                                      Row(
+                                        children: [
+                                          Icon(Icons.calendar_today, size: 14, color: cs.onSurfaceVariant),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            'Bis: ${_formatDate(hw.dueDate)}',
+                                            style: GoogleFonts.outfit(
+                                              fontSize: 12,
+                                              color: cs.onSurfaceVariant,
+                                            ),
+                                          ),
+                                          if (hw.attachmentsCount > 0) ...[
+                                            const Spacer(),
+                                            Icon(Icons.attach_file, size: 14, color: cs.onSurfaceVariant),
+                                            const SizedBox(width: 2),
                                             Text(
-                                              'Fällig: ${hw.dueDate}',
+                                              '${hw.attachmentsCount}',
                                               style: GoogleFonts.outfit(
                                                 fontSize: 12,
                                                 color: cs.onSurfaceVariant,
                                               ),
                                             ),
                                           ],
-                                        ),
+                                        ],
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -196,3 +324,6 @@ class _HomeworkScreenState extends State<HomeworkScreen> {
     );
   }
 }
+
+
+

@@ -63,7 +63,7 @@ class SubjectGrades {
 }
 
 class GradesScreen extends StatefulWidget {
-  const GradesScreen({Key? key}) : super(key: key);
+  const GradesScreen({super.key});
 
   @override
   State<GradesScreen> createState() => _GradesScreenState();
@@ -224,10 +224,10 @@ class _GradesScreenState extends State<GradesScreen> {
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Container(
           decoration: BoxDecoration(
-            color: cs.surface.withOpacity(0.65),
+            color: cs.surface.withValues(alpha: 0.65),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: cs.outlineVariant.withOpacity(0.4),
+              color: cs.outlineVariant.withValues(alpha: 0.4),
               width: 1,
             ),
           ),
@@ -415,3 +415,4 @@ class _GradesScreenState extends State<GradesScreen> {
     );
   }
 }
+

@@ -1,42 +1,52 @@
 # UntisPlus (Neo Edition)
 
 ![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)
+![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)
 
-> **Der modernste Flutter Stundenplan-Client mit Blur Design und Neo Features.**
+> **Der modernste Flutter Stundenplan-Client für Android – mit Fokus auf Design, KI und Produktivität.**
 
-UntisPlus ist ein moderner, privatsphärefokussierter Flutter Client für WebUntis. Diese "Neo Edition" kombiniert das wunderschöne, transluzente Design von UntisPlus mit den exklusiven Features von UntisNeo-mobile: **KI Chatbot**, echter **Hausaufgaben-Sync** und ein **Notenrechner**. 
+UntisPlus ist ein privatsphärefokussierter WebUntis-Client, der das Beste aus zwei Welten vereint: Das ästhetische, transluzente Design von UntisPlus und die kraftvollen Features der Neo-Serie. 
 
 ## ✨ Features
 
-- 🎨 **Modernes Blur Design**: Wunderschöne, transluzente Unterrichtskarten und eine intuitive, flüssige Benutzeroberfläche in Flutter.
-- 🤖 **Neo Smart-Assistant (Gemini)**: Integrierter KI-Chatbot, der deinen Stundenplan versteht. Lade Fotos von Arbeitsblättern hoch oder stelle Fragen zu deinem Unterricht!
-- 📚 **Echter Hausaufgaben-Sync**: Zieht (im Gegensatz zu vielen anderen Third-Party-Clients) echte Hausaufgaben direkt über die JSON-RPC API aus WebUntis, inklusive Erledigt-Status.
-- 📊 **Notenrechner**: Behalte deinen Notenschnitt im Auge mit einem dedizierten, komplett lokalen Notenrechner.
-- 🔒 **Privatsphäre zuerst**: Deine Daten bleiben auf deinem Gerät. Keine Speicherung auf fremden Servern.
+- 🎨 **Modernes Glassmorphism-Design**: Wunderschöne, transluzente UI-Elemente mit flüssigen Animationen und dynamischen Material You Farbschemata.
+- 🤖 **Neo KI-Assistent (Gemini/OpenAI)**: Ein intelligenter Begleiter, der deinen Stundenplan, deine Hausaufgaben und Prüfungen kennt. Nutze Bildanalyse für Arbeitsblätter oder frage nach deinem nächsten Schultag.
+- 📚 **Erweiterter Hausaufgaben-Sync**: Nutzt die offizielle WebUntis REST-API für maximale Zuverlässigkeit. Inklusive Anzeige von Lehrern, Anmerkungen und einer "Verbleibende Tage" Visualisierung.
+- 📅 **Prüfungsverwaltung**: Automatische Synchronisation deiner anstehenden Prüfungen direkt aus dem Klassenregister.
+- 🚶 **NEU: Abwesenheits-Tracker**: Behalte den Überblick über deine Entschuldigungen und offenen Fehlzeiten direkt in der App.
+- 📊 **Notenrechner**: Verwalte deine Noten komplett lokal und behalte deinen Schnitt im Auge.
+- 🔒 **Privatsphäre & Speed**: Keine Tracker, kein Cloud-Zwang. Deine Daten werden direkt von WebUntis geladen und lokal verarbeitet.
 
 ## 🚀 Installation
 
-Dank GitHub Actions wird bei jedem neuen Release vollautomatisch eine `app-release.apk` kompiliert. 
+Die App ist für **Android** optimiert. 
 
-1. Gehe auf die **Releases-Seite** dieses Repositories.
+1. Gehe auf die **[Releases-Seite](https://github.com/yourusername/UntisPlus/releases)**.
 2. Lade die neueste `app-release.apk` herunter.
-3. Öffne die Datei auf deinem Android-Smartphone und installiere sie (ggf. "Installation aus unbekannten Quellen" zulassen).
+3. Installiere die Datei auf deinem Smartphone (ggf. "Installation aus unbekannten Quellen" in den Einstellungen erlauben).
 
 ## 🛠️ Entwicklung
 
+### Anforderungen
+- Flutter SDK (^3.11.0)
+- Android Studio / VS Code mit Flutter Extension
+- Ein WebUntis-Account
+
 ### Setup
-1. Installiere das [Flutter SDK](https://flutter.dev/docs/get-started/install)
-2. Repository klonen: `git clone https://github.com/yourusername/UntisPlus.git`
-3. Abhängigkeiten laden: `flutter pub get`
-4. App starten: `flutter run`
+```bash
+git clone https://github.com/yourusername/UntisPlus.git
+cd UntisPlus
+flutter pub get
+flutter run
+```
 
 ### Projektstruktur
-- `lib/screens/`: Enthält alle Hauptansichten (Timetable, Homework, AI Chat, Notenrechner).
-- `lib/core/`: Design Tokens, State Management und Helfer-Klassen.
-- `lib/services/`: API-Integrationen (WebUntis, Gemini API, Background Services).
+- `lib/services/`: REST & JSON-RPC Integrationen (Homework, Exams, Absences).
+- `lib/screens/`: Feature-basierte UI-Komponenten (Timetable, AI Assistant, Absences, etc.).
+- `lib/core/`: Zentrales State Management und Design-System.
 
-## 🤝 Contributing
-Contributions sind willkommen! Erstelle einfach einen Fork, committe deine Änderungen in einem neuen Branch und öffne einen Pull Request.
+## 🤝 Mitwirken
+Verbesserungsvorschläge und Bugfixes sind immer willkommen! Erstelle einfach einen Pull Request oder öffne ein Issue.
 
 ---
-*Disclaimer: UntisPlus (Neo Edition) ist ein inoffizieller Client und steht in keiner Verbindung zur Untis GmbH.*
+*Disclaimer: UntisPlus ist ein inoffizielles Community-Projekt und steht in keiner Verbindung zur Untis GmbH.*
