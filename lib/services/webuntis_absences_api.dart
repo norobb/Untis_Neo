@@ -30,15 +30,18 @@ class Absence {
 
   factory Absence.fromJson(Map<String, dynamic> json) {
     return Absence(
-      id: json['id'] ?? 0,
+      id: int.tryParse(json['id']?.toString() ?? '') ?? 0,
       startDate: (json['startDate'] ?? '').toString(),
       endDate: (json['endDate'] ?? '').toString(),
-      startTime: json['startTime'] ?? 0,
-      endTime: json['endTime'] ?? 0,
+      startTime: int.tryParse(json['startTime']?.toString() ?? '') ?? 0,
+      endTime: int.tryParse(json['endTime']?.toString() ?? '') ?? 0,
       reason: json['reason']?.toString() ?? '',
       text: json['text']?.toString() ?? '',
-      isExcused: json['isExcused'] == true,
-      status: json['excuseStatus']?.toString() ?? '',
+      isExcused: json['isExcused'] == true ||
+          json['excuse']?['isExcused'] == true ||
+          json['excuseStatus'] == 'EXCUSED' ||
+          json['excuse']?['excuseStatus'] == 'EXCUSED',
+      status: json['excuseStatus']?.toString() ?? json['excuse']?['excuseStatus']?.toString() ?? '',
       studentName: json['studentName']?.toString() ?? '',
     );
   }
@@ -100,25 +103,41 @@ class WebUntisAbsencesApi {
       final startStr = DateFormat('yyyyMMdd').format(start);
       final endStr = DateFormat('yyyyMMdd').format(end);
 
-      final uri = Uri.parse(
-        'https://$cleanServerUrl/WebUntis/api/classreg/absences/students?startDate=$startStr&endDate=$endStr&studentId=$personId',
-      );
+      final endpoints = [
+        '/WebUntis/api/classreg/absences/student?studentId=$personId&startDate=$startStr&endDate=$endStr',
+        '/WebUntis/api/classreg/absences/students?startDate=$startStr&endDate=$endStr&studentId=$personId',
+        '/WebUntis/api/public/absences?startDate=$startStr&endDate=$endStr',
+        '/WebUntis/api/public/classreg/absences?startDate=$startStr&endDate=$endStr&studentId=$personId'
+      ];
 
-      final res = await http.get(
-        uri,
-        headers: {
-          'Cookie': 'JSESSIONID=$sessionId; schoolname=$schoolName',
-          'Accept': 'application/json',
-          'User-Agent': _clientAgent,
-        },
-      );
+      for (final endpoint in endpoints) {
+        try {
+          final uri = Uri.parse('https://$cleanServerUrl$endpoint');
+          final res = await http.get(
+            uri,
+            headers: {
+              'Cookie': 'JSESSIONID=$sessionId; schoolname=$schoolName',
+              'Accept': 'application/json',
+              'User-Agent': _clientAgent,
+            },
+          );
 
-      if (res.statusCode == 200) {
-        final decoded = jsonDecode(res.body);
-        final list = decoded['data']?['absences'] as List?;
-        if (list != null) {
-          return list.map((e) => Absence.fromJson(Map<String, dynamic>.from(e as Map))).toList();
-        }
+          if (res.statusCode == 200) {
+            final decoded = jsonDecode(res.body);
+            List<dynamic> list = [];
+            if (decoded is List) {
+              list = decoded;
+            } else if (decoded is Map) {
+              list = (decoded['data']?['absences'] ?? decoded['absences'] ?? decoded['data'] ?? decoded['result'] ?? []) as List;
+              if (list.isEmpty && decoded['data'] is Map && decoded['data'].containsKey('absences')) {
+                list = decoded['data']['absences'] as List? ?? [];
+              }
+            }
+            if (list.isNotEmpty) {
+              return list.map((e) => Absence.fromJson(Map<String, dynamic>.from(e as Map))).toList();
+            }
+          }
+        } catch (_) {}
       }
     } catch (_) {}
     return [];

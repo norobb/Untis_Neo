@@ -18,18 +18,18 @@ class GradeEntry {
   });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'value': value,
-        'weight': weight,
-        'label': label,
-      };
+    'id': id,
+    'value': value,
+    'weight': weight,
+    'label': label,
+  };
 
   factory GradeEntry.fromJson(Map<String, dynamic> json) => GradeEntry(
-        id: json['id'],
-        value: (json['value'] as num).toDouble(),
-        weight: (json['weight'] as num).toDouble(),
-        label: json['label'],
-      );
+    id: json['id'],
+    value: (json['value'] as num).toDouble(),
+    weight: (json['weight'] as num).toDouble(),
+    label: json['label'],
+  );
 }
 
 class SubjectGrades {
@@ -50,16 +50,16 @@ class SubjectGrades {
   }
 
   Map<String, dynamic> toJson() => {
-        'subjectName': subjectName,
-        'grades': grades.map((g) => g.toJson()).toList(),
-      };
+    'subjectName': subjectName,
+    'grades': grades.map((g) => g.toJson()).toList(),
+  };
 
   factory SubjectGrades.fromJson(Map<String, dynamic> json) => SubjectGrades(
-        subjectName: json['subjectName'],
-        grades: (json['grades'] as List)
-            .map((g) => GradeEntry.fromJson(g))
-            .toList(),
-      );
+    subjectName: json['subjectName'],
+    grades: (json['grades'] as List)
+        .map((g) => GradeEntry.fromJson(g))
+        .toList(),
+  );
 }
 
 class GradesScreen extends StatefulWidget {
@@ -131,8 +131,12 @@ class _GradesScreenState extends State<GradesScreen> {
             onPressed: () {
               if (controller.text.trim().isNotEmpty) {
                 setState(() {
-                  _subjects.add(SubjectGrades(
-                      subjectName: controller.text.trim(), grades: []));
+                  _subjects.add(
+                    SubjectGrades(
+                      subjectName: controller.text.trim(),
+                      grades: [],
+                    ),
+                  );
                 });
                 _saveGrades();
                 Navigator.pop(ctx);
@@ -159,17 +163,27 @@ class _GradesScreenState extends State<GradesScreen> {
           children: [
             TextField(
               controller: valueCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: 'Note (z.B. 1.0 oder 15)'),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Note (z.B. 1.0 oder 15)',
+              ),
             ),
             TextField(
               controller: weightCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: 'Gewichtung (z.B. 1.0 oder 2.0 für Klausur)'),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Gewichtung (z.B. 1.0 oder 2.0 für Klausur)',
+              ),
             ),
             TextField(
               controller: labelCtrl,
-              decoration: const InputDecoration(labelText: 'Bezeichnung (optional)'),
+              decoration: const InputDecoration(
+                labelText: 'Bezeichnung (optional)',
+              ),
             ),
           ],
         ),
@@ -184,12 +198,16 @@ class _GradesScreenState extends State<GradesScreen> {
               final w = double.tryParse(weightCtrl.text.replaceAll(',', '.'));
               if (val != null && w != null) {
                 setState(() {
-                  subject.grades.add(GradeEntry(
-                    id: DateTime.now().millisecondsSinceEpoch.toString(),
-                    value: val,
-                    weight: w,
-                    label: labelCtrl.text.trim().isEmpty ? 'Note' : labelCtrl.text.trim(),
-                  ));
+                  subject.grades.add(
+                    GradeEntry(
+                      id: DateTime.now().millisecondsSinceEpoch.toString(),
+                      value: val,
+                      weight: w,
+                      label: labelCtrl.text.trim().isEmpty
+                          ? 'Note'
+                          : labelCtrl.text.trim(),
+                    ),
+                  );
                 });
                 _saveGrades();
                 Navigator.pop(ctx);
@@ -268,7 +286,10 @@ class _GradesScreenState extends State<GradesScreen> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
             child: _buildGlassCard(
               child: Padding(
                 padding: const EdgeInsets.all(20.0),
@@ -308,7 +329,7 @@ class _GradesScreenState extends State<GradesScreen> {
                     ),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 132),
                     itemCount: _subjects.length,
                     itemBuilder: (context, index) {
                       final subject = _subjects[index];
@@ -316,10 +337,13 @@ class _GradesScreenState extends State<GradesScreen> {
                         padding: const EdgeInsets.only(bottom: 12.0),
                         child: _buildGlassCard(
                           child: Theme(
-                            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                            data: Theme.of(
+                              context,
+                            ).copyWith(dividerColor: Colors.transparent),
                             child: ExpansionTile(
                               title: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     subject.subjectName,
@@ -329,7 +353,10 @@ class _GradesScreenState extends State<GradesScreen> {
                                     ),
                                   ),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 4,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: cs.primaryContainer,
                                       borderRadius: BorderRadius.circular(12),
@@ -349,18 +376,23 @@ class _GradesScreenState extends State<GradesScreen> {
                                 if (subject.grades.isEmpty)
                                   const Padding(
                                     padding: EdgeInsets.all(16.0),
-                                    child: Text('Noch keine Noten eingetragen.'),
+                                    child: Text(
+                                      'Noch keine Noten eingetragen.',
+                                    ),
                                   )
                                 else
                                   ListView.builder(
                                     shrinkWrap: true,
-                                    physics: const NeverScrollableScrollPhysics(),
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
                                     itemCount: subject.grades.length,
                                     itemBuilder: (ctx, i) {
                                       final grade = subject.grades[i];
                                       return ListTile(
                                         title: Text(grade.label),
-                                        subtitle: Text('Gewichtung: ${grade.weight}'),
+                                        subtitle: Text(
+                                          'Gewichtung: ${grade.weight}',
+                                        ),
                                         trailing: Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
@@ -372,9 +404,13 @@ class _GradesScreenState extends State<GradesScreen> {
                                               ),
                                             ),
                                             IconButton(
-                                              icon: const Icon(Icons.delete_outline, size: 20),
+                                              icon: const Icon(
+                                                Icons.delete_outline,
+                                                size: 20,
+                                              ),
                                               color: cs.error,
-                                              onPressed: () => _deleteGrade(subject, grade),
+                                              onPressed: () =>
+                                                  _deleteGrade(subject, grade),
                                             ),
                                           ],
                                         ),
@@ -384,13 +420,17 @@ class _GradesScreenState extends State<GradesScreen> {
                                 Padding(
                                   padding: const EdgeInsets.all(8.0),
                                   child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
                                     children: [
                                       TextButton.icon(
-                                        onPressed: () => _deleteSubject(subject),
+                                        onPressed: () =>
+                                            _deleteSubject(subject),
                                         icon: const Icon(Icons.delete),
                                         label: const Text('Fach löschen'),
-                                        style: TextButton.styleFrom(foregroundColor: cs.error),
+                                        style: TextButton.styleFrom(
+                                          foregroundColor: cs.error,
+                                        ),
                                       ),
                                       FilledButton.icon(
                                         onPressed: () => _addGrade(subject),
@@ -415,4 +455,3 @@ class _GradesScreenState extends State<GradesScreen> {
     );
   }
 }
-

@@ -42,7 +42,10 @@ class _AbsencesPageState extends State<AbsencesPage> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: Text('Abwesenheiten', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+        title: Text(
+          'Abwesenheiten',
+          style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
@@ -55,18 +58,18 @@ class _AbsencesPageState extends State<AbsencesPage> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _absences.isEmpty
-              ? _buildEmptyState()
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _absences.length,
-                  itemBuilder: (context, index) {
-                    final abs = _absences[index];
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12.0),
-                      child: _buildAbsenceCard(abs),
-                    );
-                  },
-                ),
+          ? _buildEmptyState()
+          : ListView.builder(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 132),
+              itemCount: _absences.length,
+              itemBuilder: (context, index) {
+                final abs = _absences[index];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12.0),
+                  child: _buildAbsenceCard(abs),
+                );
+              },
+            ),
     );
   }
 
@@ -75,11 +78,18 @@ class _AbsencesPageState extends State<AbsencesPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.check_circle_outline_rounded, size: 64, color: Colors.green.withValues(alpha: 0.5)),
+          Icon(
+            Icons.check_circle_outline_rounded,
+            size: 64,
+            color: Colors.green.withValues(alpha: 0.5),
+          ),
           const SizedBox(height: 16),
           Text(
             'Keine Abwesenheiten gefunden',
-            style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w500),
+            style: GoogleFonts.outfit(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+            ),
           ),
           Text(
             'Du warst immer pünktlich!',
@@ -127,7 +137,11 @@ class _AbsencesPageState extends State<AbsencesPage> {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  Icon(Icons.access_time_rounded, size: 14, color: cs.onSurfaceVariant),
+                  Icon(
+                    Icons.access_time_rounded,
+                    size: 14,
+                    color: cs.onSurfaceVariant,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     '${_formatTime(abs.startTime)} - ${_formatTime(abs.endTime)}',

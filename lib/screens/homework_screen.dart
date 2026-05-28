@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:untisplus/services/webuntis_homework_api.dart';
- // To access shared UI components like _glassContainer if they are public, but they are private inside main.dart part 'shared_ui.dart'
+// To access shared UI components like _glassContainer if they are public, but they are private inside main.dart part 'shared_ui.dart'
 // Wait, _glassContainer is private in main.dart?
 // I need to check if they are exposed. For now, I will use standard Flutter blur or see how main_navigation_screen uses it.
 import 'dart:ui';
@@ -70,7 +70,9 @@ class _HomeworkScreenState extends State<HomeworkScreen> {
     try {
       final due = DateTime.parse(dueDate);
       final now = DateTime.now();
-      final diff = due.difference(DateTime(now.year, now.month, now.day)).inDays;
+      final diff = due
+          .difference(DateTime(now.year, now.month, now.day))
+          .inDays;
       final cs = Theme.of(context).colorScheme;
 
       Color bgColor;
@@ -127,7 +129,7 @@ class _HomeworkScreenState extends State<HomeworkScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    
+
     return Scaffold(
       backgroundColor: Colors.transparent, // For custom background
       appBar: AppBar(
@@ -138,192 +140,213 @@ class _HomeworkScreenState extends State<HomeworkScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadHomework,
-          ),
+          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadHomework),
         ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.error_outline, size: 48, color: cs.error),
-                        const SizedBox(height: 16),
-                        Text(
-                          _error!,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: cs.error),
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: _loadHomework,
-                          child: const Text('Erneut versuchen'),
-                        ),
-                      ],
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error_outline, size: 48, color: cs.error),
+                    const SizedBox(height: 16),
+                    Text(
+                      _error!,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: cs.error),
                     ),
-                  ),
-                )
-              : _homeworks.isEmpty
-                  ? Center(
-                      child: Text(
-                        'Keine Hausaufgaben gefunden.',
-                        style: GoogleFonts.outfit(
-                          fontSize: 18,
-                          color: cs.onSurfaceVariant,
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: _loadHomework,
+                      child: const Text('Erneut versuchen'),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : _homeworks.isEmpty
+          ? Center(
+              child: Text(
+                'Keine Hausaufgaben gefunden.',
+                style: GoogleFonts.outfit(
+                  fontSize: 18,
+                  color: cs.onSurfaceVariant,
+                ),
+              ),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 132),
+              itemCount: _homeworks.length,
+              itemBuilder: (context, index) {
+                final hw = _homeworks[index];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12.0),
+                  child: _buildGlassCard(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Checkbox(
+                          value: hw.isDone,
+                          onChanged: (v) async {
+                            final bool success =
+                                await WebUntisHomeworkApi.setHomeworkDone(
+                                  hw.id,
+                                  v ?? false,
+                                );
+                            if (success) {
+                              setState(() {
+                                _homeworks[index] = Homework(
+                                  id: hw.id,
+                                  subjectCode: hw.subjectCode,
+                                  subjectLongName: hw.subjectLongName,
+                                  teacherName: hw.teacherName,
+                                  description: hw.description,
+                                  remark: hw.remark,
+                                  dueDate: hw.dueDate,
+                                  isDone: v ?? false,
+                                  attachmentsCount: hw.attachmentsCount,
+                                );
+                              });
+                            } else {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Fehler beim Aktualisieren der Hausaufgabe',
+                                    ),
+                                  ),
+                                );
+                              }
+                            }
+                          },
                         ),
-                      ),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _homeworks.length,
-                      itemBuilder: (context, index) {
-                        final hw = _homeworks[index];
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12.0),
-                          child: _buildGlassCard(
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Checkbox(
-                                  value: hw.isDone,
-                                  onChanged: (v) async {
-                                    final bool success = await WebUntisHomeworkApi.setHomeworkDone(hw.id, v ?? false);
-                                    if (success) {
-                                      setState(() {
-                                        _homeworks[index] = Homework(
-                                          id: hw.id,
-                                          subjectCode: hw.subjectCode,
-                                          subjectLongName: hw.subjectLongName,
-                                          teacherName: hw.teacherName,
-                                          description: hw.description,
-                                          remark: hw.remark,
-                                          dueDate: hw.dueDate,
-                                          isDone: v ?? false,
-                                          attachmentsCount: hw.attachmentsCount,
-                                        );
-                                      });
-                                    } else {
-                                      if (mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(content: Text('Fehler beim Aktualisieren der Hausaufgabe')),
-                                        );
-                                      }
-                                    }
-                                  },
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      hw.subjectLongName.isNotEmpty
+                                          ? hw.subjectLongName
+                                          : hw.subjectCode,
+                                      style: GoogleFonts.outfit(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        color: cs.primary,
+                                      ),
+                                    ),
+                                  ),
+                                  if (hw.dueDate.isNotEmpty)
+                                    _buildRemainingDaysChip(hw.dueDate),
+                                ],
+                              ),
+                              if (hw.teacherName.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 2.0),
+                                  child: Text(
+                                    hw.teacherName,
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 13,
+                                      color: cs.onSurfaceVariant,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
                                 ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                              const SizedBox(height: 8),
+                              Text(
+                                hw.description,
+                                style: GoogleFonts.outfit(
+                                  fontSize: 15,
+                                  color: cs.onSurface,
+                                  decoration: hw.isDone
+                                      ? TextDecoration.lineThrough
+                                      : null,
+                                ),
+                              ),
+                              if (hw.remark.isNotEmpty) ...[
+                                const SizedBox(height: 8),
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: cs.secondaryContainer.withValues(
+                                      alpha: 0.3,
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
                                     children: [
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                              hw.subjectLongName.isNotEmpty ? hw.subjectLongName : hw.subjectCode,
-                                              style: GoogleFonts.outfit(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 16,
-                                                color: cs.primary,
-                                              ),
-                                            ),
-                                          ),
-                                          if (hw.dueDate.isNotEmpty)
-                                            _buildRemainingDaysChip(hw.dueDate),
-                                        ],
+                                      Icon(
+                                        Icons.info_outline,
+                                        size: 14,
+                                        color: cs.secondary,
                                       ),
-                                      if (hw.teacherName.isNotEmpty)
-                                        Padding(
-                                          padding: const EdgeInsets.only(top: 2.0),
-                                          child: Text(
-                                            hw.teacherName,
-                                            style: GoogleFonts.outfit(
-                                              fontSize: 13,
-                                              color: cs.onSurfaceVariant,
-                                              fontWeight: FontWeight.w500,
-                                            ),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: Text(
+                                          hw.remark,
+                                          style: GoogleFonts.outfit(
+                                            fontSize: 12,
+                                            fontStyle: FontStyle.italic,
+                                            color: cs.onSecondaryContainer,
                                           ),
                                         ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        hw.description,
-                                        style: GoogleFonts.outfit(
-                                          fontSize: 15,
-                                          color: cs.onSurface,
-                                          decoration: hw.isDone ? TextDecoration.lineThrough : null,
-                                        ),
-                                      ),
-                                      if (hw.remark.isNotEmpty) ...[
-                                        const SizedBox(height: 8),
-                                        Container(
-                                          padding: const EdgeInsets.all(8),
-                                          decoration: BoxDecoration(
-                                            color: cs.secondaryContainer.withValues(alpha: 0.3),
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          child: Row(
-                                            children: [
-                                              Icon(Icons.info_outline, size: 14, color: cs.secondary),
-                                              const SizedBox(width: 6),
-                                              Expanded(
-                                                child: Text(
-                                                  hw.remark,
-                                                  style: GoogleFonts.outfit(
-                                                    fontSize: 12,
-                                                    fontStyle: FontStyle.italic,
-                                                    color: cs.onSecondaryContainer,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                      const SizedBox(height: 8),
-                                      Row(
-                                        children: [
-                                          Icon(Icons.calendar_today, size: 14, color: cs.onSurfaceVariant),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            'Bis: ${_formatDate(hw.dueDate)}',
-                                            style: GoogleFonts.outfit(
-                                              fontSize: 12,
-                                              color: cs.onSurfaceVariant,
-                                            ),
-                                          ),
-                                          if (hw.attachmentsCount > 0) ...[
-                                            const Spacer(),
-                                            Icon(Icons.attach_file, size: 14, color: cs.onSurfaceVariant),
-                                            const SizedBox(width: 2),
-                                            Text(
-                                              '${hw.attachmentsCount}',
-                                              style: GoogleFonts.outfit(
-                                                fontSize: 12,
-                                                color: cs.onSurfaceVariant,
-                                              ),
-                                            ),
-                                          ],
-                                        ],
                                       ),
                                     ],
                                   ),
                                 ),
                               ],
-                            ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.calendar_today,
+                                    size: 14,
+                                    color: cs.onSurfaceVariant,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Bis: ${_formatDate(hw.dueDate)}',
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 12,
+                                      color: cs.onSurfaceVariant,
+                                    ),
+                                  ),
+                                  if (hw.attachmentsCount > 0) ...[
+                                    const Spacer(),
+                                    Icon(
+                                      Icons.attach_file,
+                                      size: 14,
+                                      color: cs.onSurfaceVariant,
+                                    ),
+                                    const SizedBox(width: 2),
+                                    Text(
+                                      '${hw.attachmentsCount}',
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 12,
+                                        color: cs.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ],
                           ),
-                        );
-                      },
+                        ),
+                      ],
                     ),
+                  ),
+                );
+              },
+            ),
     );
   }
 }
-
-
-
