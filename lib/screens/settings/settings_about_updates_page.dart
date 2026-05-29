@@ -10,6 +10,28 @@ class SettingsAboutUpdatesPage extends StatefulWidget {
 
 class _SettingsAboutUpdatesPageState extends State<SettingsAboutUpdatesPage> {
   bool _checking = false;
+  String _updateChannel = 'stable';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadChannel();
+  }
+
+  Future<void> _loadChannel() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _updateChannel = prefs.getString('update_channel') ?? 'stable';
+    });
+  }
+
+  Future<void> _setChannel(String channel) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('update_channel', channel);
+    setState(() {
+      _updateChannel = channel;
+    });
+  }
 
   List<int> _extractVersionParts(String input) {
     final cleaned = input.trim().replaceFirst(RegExp(r'^[vV]'), '');
@@ -95,6 +117,14 @@ class _SettingsAboutUpdatesPageState extends State<SettingsAboutUpdatesPage> {
     return result ?? false;
   }
 
+  Future<void> _downloadAndInstallApk(String url, String version, AppL10n l) async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => _DownloadProgressDialog(url: url, version: version, l: l),
+    );
+  }
+
   Future<void> _checkGithubUpdate() async {
     if (_checking) return;
     final l = AppL10n.of(appLocaleNotifier.value);
@@ -109,19 +139,32 @@ class _SettingsAboutUpdatesPageState extends State<SettingsAboutUpdatesPage> {
     );
 
     try {
+      final String url = _updateChannel == 'nightly'
+          ? 'https://api.github.com/repos/norobb/Untis_Neo/releases'
+          : 'https://api.github.com/repos/norobb/Untis_Neo/releases/latest';
+
       final resp = await http.get(
-        Uri.parse(
-          'https://api.github.com/repos/norobb/Untis_Neo/releases/latest',
-        ),
+        Uri.parse(url),
         headers: const {'Accept': 'application/vnd.github+json'},
       );
       if (resp.statusCode < 200 || resp.statusCode >= 300) {
         throw Exception('GitHub API error ${resp.statusCode}');
       }
 
-      final data = jsonDecode(resp.body);
-      if (data is! Map<String, dynamic>) {
-        throw Exception('Invalid GitHub response');
+      final dynamic decoded = jsonDecode(resp.body);
+      final Map<String, dynamic> data;
+
+      if (_updateChannel == 'nightly') {
+        if (decoded is List && decoded.isNotEmpty) {
+          data = decoded.first as Map<String, dynamic>;
+        } else {
+          throw Exception('No releases found');
+        }
+      } else {
+        if (decoded is! Map<String, dynamic>) {
+          throw Exception('Invalid GitHub response');
+        }
+        data = decoded;
       }
 
       final tag = (data['tag_name'] ?? '').toString().trim();
@@ -153,22 +196,26 @@ class _SettingsAboutUpdatesPageState extends State<SettingsAboutUpdatesPage> {
       final confirmed = await _confirmInstall(l, latestVersion);
       if (!confirmed) return;
 
-      final launched = await url_launcher.launchUrlString(
-        targetUrl,
-        mode: url_launcher.LaunchMode.externalApplication,
-      );
+      if (targetUrl.toLowerCase().endsWith('.apk')) {
+        await _downloadAndInstallApk(targetUrl, latestVersion, l);
+      } else {
+        final launched = await url_launcher.launchUrlString(
+          targetUrl,
+          mode: url_launcher.LaunchMode.externalApplication,
+        );
 
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            launched
-                ? l.settingsGithubInstallPrompted
-                : l.settingsGithubOpenFailed,
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              launched
+                  ? l.settingsGithubInstallPrompted
+                  : l.settingsGithubOpenFailed,
+            ),
+            behavior: SnackBarBehavior.floating,
           ),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+        );
+      }
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -224,6 +271,45 @@ class _SettingsAboutUpdatesPageState extends State<SettingsAboutUpdatesPage> {
             const SizedBox(height: 12),
             Card.filled(
               color: cs.surfaceContainerHigh,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.tune_rounded),
+                        const SizedBox(width: 16),
+                        Text(
+                          'Update Channel',
+                          style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 16),
+                        ),
+                      ],
+                    ),
+                    DropdownButton<String>(
+                      value: _updateChannel,
+                      underline: const SizedBox(),
+                      items: [
+                        DropdownMenuItem(
+                          value: 'stable',
+                          child: Text('Stable', style: GoogleFonts.outfit()),
+                        ),
+                        DropdownMenuItem(
+                          value: 'nightly',
+                          child: Text('Nightly', style: GoogleFonts.outfit()),
+                        ),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) _setChannel(val);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Card.filled(
+              color: cs.surfaceContainerHigh,
               child: ListTile(
                 leading: const Icon(Icons.open_in_new_rounded),
                 title: Text(
@@ -261,6 +347,105 @@ class _SettingsAboutUpdatesPageState extends State<SettingsAboutUpdatesPage> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _DownloadProgressDialog extends StatefulWidget {
+  final String url;
+  final String version;
+  final AppL10n l;
+  const _DownloadProgressDialog({required this.url, required this.version, required this.l});
+
+  @override
+  State<_DownloadProgressDialog> createState() => _DownloadProgressDialogState();
+}
+
+class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
+  double _progress = 0.0;
+  bool _downloading = true;
+  String _statusMessage = 'Downloading update...';
+
+  @override
+  void initState() {
+    super.initState();
+    _startDownload();
+  }
+
+  Future<void> _startDownload() async {
+    try {
+      final request = http.Request('GET', Uri.parse(widget.url));
+      final response = await http.Client().send(request);
+      final totalBytes = response.contentLength ?? 0;
+      int receivedBytes = 0;
+
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/untisplus_update_${widget.version}.apk');
+      final sink = file.openWrite();
+
+      await response.stream.listen((List<int> chunk) {
+        receivedBytes += chunk.length;
+        if (totalBytes > 0) {
+          if (mounted) {
+            setState(() {
+              _progress = receivedBytes / totalBytes;
+            });
+          }
+        }
+        sink.add(chunk);
+      }).asFuture();
+
+      await sink.close();
+
+      if (mounted) {
+        setState(() {
+          _downloading = false;
+          _statusMessage = 'Starting installation...';
+        });
+      }
+
+      if (!mounted) return;
+      Navigator.pop(context);
+
+      final result = await OpenFilex.open(file.path);
+      if (result.type != ResultType.done && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Installation failed: ${result.message}')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _downloading = false;
+          _statusMessage = 'Download failed.';
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Update to ${widget.version}', style: GoogleFonts.outfit(fontWeight: FontWeight.w800)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (_downloading) ...[
+            LinearProgressIndicator(value: _progress),
+            const SizedBox(height: 16),
+            Text('${(_progress * 100).toStringAsFixed(1)}%', style: GoogleFonts.outfit()),
+          ],
+          Text(_statusMessage, style: GoogleFonts.outfit()),
+        ],
+      ),
+      actions: [
+        if (!_downloading)
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Close', style: GoogleFonts.outfit()),
+          ),
+      ],
     );
   }
 }
