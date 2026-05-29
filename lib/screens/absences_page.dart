@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../services/webuntis_absences_api.dart';
-import '../main.dart' as app_state;
 
 class AbsencesPage extends StatefulWidget {
   const AbsencesPage({super.key});
@@ -15,6 +14,8 @@ class AbsencesPage extends StatefulWidget {
 class _AbsencesPageState extends State<AbsencesPage> {
   List<Absence> _absences = [];
   bool _loading = true;
+  DateTime? _startDate;
+  DateTime? _endDate;
 
   @override
   void initState() {
@@ -24,7 +25,10 @@ class _AbsencesPageState extends State<AbsencesPage> {
 
   Future<void> _fetch() async {
     setState(() => _loading = true);
-    final results = await WebUntisAbsencesApi.fetchAbsences();
+    final results = await WebUntisAbsencesApi.fetchAbsences(
+      startRange: _startDate,
+      endRange: _endDate,
+    );
     if (mounted) {
       setState(() {
         _absences = results;
@@ -32,6 +36,34 @@ class _AbsencesPageState extends State<AbsencesPage> {
         _absences.sort((a, b) => b.startDate.compareTo(a.startDate));
         _loading = false;
       });
+    }
+  }
+
+  Future<void> _pickDateRange() async {
+    final now = DateTime.now();
+    final initialRange = DateTimeRange(
+      start: _startDate ?? now.subtract(const Duration(days: 365)),
+      end: _endDate ?? now.add(const Duration(days: 30)),
+    );
+    final picked = await showDateRangePicker(
+      context: context,
+      initialDateRange: initialRange,
+      firstDate: now.subtract(const Duration(days: 365 * 5)),
+      lastDate: now.add(const Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _startDate = picked.start;
+        _endDate = picked.end;
+      });
+      _fetch();
     }
   }
 
@@ -50,26 +82,74 @@ class _AbsencesPageState extends State<AbsencesPage> {
         elevation: 0,
         actions: [
           IconButton(
+            onPressed: _pickDateRange,
+            icon: const Icon(Icons.date_range_rounded),
+            tooltip: 'Zeitraum auswählen',
+          ),
+          IconButton(
             onPressed: _fetch,
             icon: const Icon(Icons.refresh_rounded),
           ),
         ],
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _absences.isEmpty
-          ? _buildEmptyState()
-          : ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 132),
-              itemCount: _absences.length,
-              itemBuilder: (context, index) {
-                final abs = _absences[index];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12.0),
-                  child: _buildAbsenceCard(abs),
-                );
-              },
+      body: Column(
+        children: [
+          if (_startDate != null && _endDate != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                decoration: BoxDecoration(
+                  color: cs.primaryContainer.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: cs.primary.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.filter_alt_rounded, size: 20, color: cs.onPrimaryContainer),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '${DateFormat('dd.MM.yy').format(_startDate!)} - ${DateFormat('dd.MM.yy').format(_endDate!)}',
+                        style: GoogleFonts.outfit(
+                          fontWeight: FontWeight.w600,
+                          color: cs.onPrimaryContainer,
+                        ),
+                      ),
+                    ),
+                    InkWell(
+                      onTap: () {
+                        setState(() {
+                          _startDate = null;
+                          _endDate = null;
+                        });
+                        _fetch();
+                      },
+                      child: Icon(Icons.close_rounded, size: 20, color: cs.onPrimaryContainer),
+                    ),
+                  ],
+                ),
+              ),
             ),
+          Expanded(
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : _absences.isEmpty
+                ? _buildEmptyState()
+                : ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 132),
+                    itemCount: _absences.length,
+                    itemBuilder: (context, index) {
+                      final abs = _absences[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12.0),
+                        child: _buildAbsenceCard(abs),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -182,7 +262,6 @@ class _AbsencesPageState extends State<AbsencesPage> {
   }
 
   Widget _buildStatusChip(Absence abs) {
-    final cs = Theme.of(context).colorScheme;
     Color color;
     String text;
 

@@ -45,6 +45,15 @@ class AppL10n {
   String get loginTwoFactorRequired => _t('loginTwoFactorRequired');
   String get loginTwoFactorInvalid => _t('loginTwoFactorInvalid');
   String get loginVerifyButton => _t('loginVerifyButton');
+  String get loginScanQrCode => _t('loginScanQrCode');
+  String get loginOr => _t('loginOr');
+  String get loginInvalidQrCode => _t('loginInvalidQrCode');
+  String get updateAvailableTitle => _t('updateAvailableTitle');
+  String updateAvailableDesc(String tag) => _t('updateAvailableDesc').replaceAll('{tag}', tag);
+  String get updateLater => _t('updateLater');
+  String get updateNow => _t('updateNow');
+  String get settingsUpdateRepo => _t('settingsUpdateRepo');
+  String get settingsUpdateRepoDesc => _t('settingsUpdateRepoDesc');
 
   // ── Onboarding ─────────────────────────────────────────────────────────────
   String get onboardingWelcomeTitle => _t('onboardingWelcomeTitle');
@@ -108,6 +117,11 @@ class AppL10n {
   String get timetableMyTimetable => _t('timetableMyTimetable');
   String get timetableSelectAnother => _t('timetableSelectAnother');
   String get timetableNoClassesFound => _t('timetableNoClassesFound');
+
+  String get timetableExportCalendar => _t('timetableExportCalendar');
+  String get timetableExportSuccess => _t('timetableExportSuccess');
+  String get timetableExportFailed => _t('timetableExportFailed');
+
   String get freeRoomsTitle => _t('freeRoomsTitle');
   String get freeRoomsSelectTime => _t('freeRoomsSelectTime');
   String get freeRoomsNoneFound => _t('freeRoomsNoneFound');
@@ -506,6 +520,15 @@ class AppL10n {
       'loginTwoFactorInvalid':
           'Der 2FA-Code ist ungültig oder abgelaufen. Bitte versuche es erneut.',
       'loginVerifyButton': 'Verifizieren',
+      'loginScanQrCode': 'QR-Code scannen (WebUntis)',
+      'loginOr': 'ODER',
+      'loginInvalidQrCode': 'Ungültiger QR-Code',
+      'updateAvailableTitle': 'Update verfügbar',
+      'updateAvailableDesc': 'Eine neue Version ({tag}) von UntisPlus ist verfügbar. Möchtest du sie herunterladen?',
+      'updateLater': 'Später',
+      'updateNow': 'Aktualisieren',
+      'settingsUpdateRepo': 'Update Repository',
+      'settingsUpdateRepoDesc': 'GitHub Repository für App-Updates',
 
       'onboardingWelcomeTitle': 'Willkommen bei UntisNeo',
       'onboardingChooseLanguageSubtitle': 'Wähle deine bevorzugte Sprache',
@@ -981,17 +1004,15 @@ Use "useThemeColors": true unless the prompt asks for specific colors.
       'settingsBackupConfirmAction': 'Importieren',
 
       'aiSystemPersona':
-          'Du bist "Plan-Assistent", ein freundlicher und motivierender KI-Helfer für Schüler*innen.',
-      'aiSystemRules': '''REGELN:
-- Antworte basierend auf den obigen Stundenplan- und Klausurendaten.
-- Erfinde KEINE Fächer, Zeiten, Lehrer oder sonstige Informationen.
-- Berücksichtige Prüfungen/Klausuren in deinen Antworten, wenn es thematisch passt.
-- Wenn etwas aus den Daten nicht ableitbar ist, sage es offen.
-- Beachte [FÄLLT AUS]-Markierungen (diese Stunden finden nicht statt).
-- "Freistunden" = Lücken zwischen zwei Unterrichtsstunden.
-- Antworte auf Deutsch, sei hilfreich, motivierend und auf den Punkt.
-- Beginne nicht automatisch mit "Ja," – antworte direkt.
-- Du darfst Markdown zur Formatierung verwenden (z.B. Listen, **fett**).''',
+          'Du bist "Untis-KI", ein hochintelligenter, strukturierter und aufmerksamer KI-Assistent für Schüler*innen und Lehrkräfte.',
+      'aiSystemRules': '''<system_rules>
+  <rule>Antworte ausschließlich basierend auf den bereitgestellten Stundenplan- und Prüfungsdaten. Halluziniere keine Fächer, Zeiten oder Räume.</rule>
+  <rule>Nutze einen klaren, präzisen und motivierenden Tonfall. Verzichte auf unnötige Füllwörter und beginne direkt mit der Antwort.</rule>
+  <rule>Strukturiere deine Antworten für maximale Lesbarkeit. Nutze Markdown, Aufzählungszeichen, Fettdruck für wichtige Zeiten/Räume und Zeilenumbrüche.</rule>
+  <rule>Achte explizit auf Ausfälle ([FÄLLT AUS]) und hebe diese deutlich hervor.</rule>
+  <rule>Wenn eine Information nicht aus den Daten ableitbar ist, kommuniziere dies transparent.</rule>
+  <rule>Analysiere komplexe Fragen (z.B. "Wann habe ich nächste Woche Mathe?") systematisch Schritt für Schritt, bevor du die Antwort ausgibst.</rule>
+</system_rules>''',
     },
 
     // ── ENGLISH ───────────────────────────────────────────────────────────────
@@ -1029,6 +1050,15 @@ Use "useThemeColors": true unless the prompt asks for specific colors.
       'loginTwoFactorInvalid':
           'The 2FA code is invalid or expired. Please try again.',
       'loginVerifyButton': 'Verify',
+      'loginScanQrCode': 'Scan QR Code (WebUntis)',
+      'loginOr': 'OR',
+      'loginInvalidQrCode': 'Invalid QR Code',
+      'updateAvailableTitle': 'Update available',
+      'updateAvailableDesc': 'A new version ({tag}) of UntisPlus is available. Do you want to download it?',
+      'updateLater': 'Later',
+      'updateNow': 'Update',
+      'settingsUpdateRepo': 'Update Repository',
+      'settingsUpdateRepoDesc': 'GitHub repository for app updates',
 
       'onboardingWelcomeTitle': 'Welcome to UntisNeo',
       'onboardingChooseLanguageSubtitle': 'Choose your preferred language',
@@ -1532,6 +1562,15 @@ Use "useThemeColors": true unless the prompt asks for specific colors.
           'Le 2FA est activé. Veuillez saisir votre code de vérification.',
       'loginTwoFactorInvalid': 'Le code 2FA est invalide ou expiré. Réessaie.',
       'loginVerifyButton': 'Vérifier',
+      'loginScanQrCode': 'Scanner le code QR (WebUntis)',
+      'loginOr': 'OU',
+      'loginInvalidQrCode': 'Code QR invalide',
+      'updateAvailableTitle': 'Mise à jour disponible',
+      'updateAvailableDesc': 'Une nouvelle version ({tag}) d\'UntisPlus est disponible. Voulez-vous la télécharger ?',
+      'updateLater': 'Plus tard',
+      'updateNow': 'Mettre à jour',
+      'settingsUpdateRepo': 'Dépôt de mise à jour',
+      'settingsUpdateRepoDesc': 'Dépôt GitHub pour les mises à jour',
 
       'onboardingWelcomeTitle': 'Bienvenue sur UntisNeo',
       'onboardingChooseLanguageSubtitle': 'Choisis ta langue préférée',
@@ -2011,6 +2050,15 @@ Use "useThemeColors": true unless the prompt asks for specific colors.
       'loginTwoFactorInvalid':
           'El código 2FA no es válido o ha caducado. Inténtalo de nuevo.',
       'loginVerifyButton': 'Verificar',
+      'loginScanQrCode': 'Escanear código QR (WebUntis)',
+      'loginOr': 'O',
+      'loginInvalidQrCode': 'Código QR inválido',
+      'updateAvailableTitle': 'Actualización disponible',
+      'updateAvailableDesc': 'Una nueva versión ({tag}) de UntisPlus está disponible. ¿Quieres descargarla?',
+      'updateLater': 'Más tarde',
+      'updateNow': 'Actualizar',
+      'settingsUpdateRepo': 'Repositorio de actualización',
+      'settingsUpdateRepoDesc': 'Repositorio de GitHub para actualizaciones',
 
       'onboardingWelcomeTitle': 'Bienvenido a UntisNeo',
       'onboardingChooseLanguageSubtitle': 'Elige tu idioma preferido',
@@ -2487,6 +2535,15 @@ Use "useThemeColors": true unless the prompt asks for specific colors.
       'loginTwoFactorInvalid':
           'Ο κωδικός 2FA δεν είναι έγκυρος ή έχει λήξει. Δοκίμασε ξανά.',
       'loginVerifyButton': 'Επαλήθευση',
+      'loginScanQrCode': 'Σάρωση κωδικού QR (WebUntis)',
+      'loginOr': 'Ή',
+      'loginInvalidQrCode': 'Μη έγκυρος κωδικός QR',
+      'updateAvailableTitle': 'Διαθέσιμη ενημέρωση',
+      'updateAvailableDesc': 'Μια νέα έκδοση ({tag}) του UntisPlus είναι διαθέσιμη. Θέλετε να την κατεβάσετε;',
+      'updateLater': 'Αργότερα',
+      'updateNow': 'Ενημέρωση',
+      'settingsUpdateRepo': 'Αποθετήριο ενημερώσεων',
+      'settingsUpdateRepoDesc': 'Αποθετήριο GitHub για ενημερώσεις',
 
       'onboardingWelcomeTitle': 'Καλώς ήρθες στο UntisNeo',
       'onboardingChooseLanguageSubtitle': 'Επίλεξε τη γλώσσα που προτιμάς',

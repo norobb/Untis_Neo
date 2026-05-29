@@ -33,6 +33,44 @@ class _SettingsAboutUpdatesPageState extends State<SettingsAboutUpdatesPage> {
     });
   }
 
+  Future<void> _changeUpdateRepo() async {
+    final l = AppL10n.of(appLocaleNotifier.value);
+    final controller = TextEditingController(text: updateRepo);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: Text(l.settingsUpdateRepo, style: GoogleFonts.outfit(fontWeight: FontWeight.w800)),
+          content: TextField(
+            controller: controller,
+            decoration: InputDecoration(
+              hintText: 'e.g. norobb/Untis_Neo',
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(l.examsCancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+              child: Text(l.examsSave),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result != null && result.isNotEmpty) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('updateRepo', result);
+      setState(() {
+        updateRepo = result;
+      });
+    }
+  }
+
   List<int> _extractVersionParts(String input) {
     final cleaned = input.trim().replaceFirst(RegExp(r'^[vV]'), '');
     final matches = RegExp(r'\d+').allMatches(cleaned);
@@ -140,8 +178,8 @@ class _SettingsAboutUpdatesPageState extends State<SettingsAboutUpdatesPage> {
 
     try {
       final String url = _updateChannel == 'nightly'
-          ? 'https://api.github.com/repos/norobb/Untis_Neo/releases'
-          : 'https://api.github.com/repos/norobb/Untis_Neo/releases/latest';
+          ? 'https://api.github.com/repos/$updateRepo/releases'
+          : 'https://api.github.com/repos/$updateRepo/releases/latest';
 
       final resp = await http.get(
         Uri.parse(url),
@@ -169,7 +207,7 @@ class _SettingsAboutUpdatesPageState extends State<SettingsAboutUpdatesPage> {
 
       final tag = (data['tag_name'] ?? '').toString().trim();
       final htmlUrl =
-          (data['html_url'] ?? 'https://github.com/norobb/Untis_Neo/releases')
+          (data['html_url'] ?? 'https://github.com/$updateRepo/releases')
               .toString();
       final assets = (data['assets'] is List)
           ? data['assets'] as List<dynamic>
@@ -311,6 +349,23 @@ class _SettingsAboutUpdatesPageState extends State<SettingsAboutUpdatesPage> {
             Card.filled(
               color: cs.surfaceContainerHigh,
               child: ListTile(
+                leading: const Icon(Icons.source_rounded),
+                title: Text(
+                  l.settingsUpdateRepo,
+                  style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+                ),
+                subtitle: Text(
+                  updateRepo,
+                  style: GoogleFonts.outfit(),
+                ),
+                trailing: const Icon(Icons.edit_rounded),
+                onTap: _changeUpdateRepo,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Card.filled(
+              color: cs.surfaceContainerHigh,
+              child: ListTile(
                 leading: const Icon(Icons.open_in_new_rounded),
                 title: Text(
                   l.settingsGithubOpenReleasePage,
@@ -323,7 +378,7 @@ class _SettingsAboutUpdatesPageState extends State<SettingsAboutUpdatesPage> {
                 trailing: const Icon(Icons.chevron_right_rounded),
                 onTap: () {
                   url_launcher.launchUrlString(
-                    'https://github.com/norobb/Untis_Neo/releases',
+                    'https://github.com/$updateRepo/releases',
                     mode: url_launcher.LaunchMode.externalApplication,
                   );
                 },

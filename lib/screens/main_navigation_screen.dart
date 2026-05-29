@@ -40,10 +40,8 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
   DateTime _currentMonday = DateTime.now();
   bool _loading = true;
   bool _thinking = false;
-  final bool _showTypingHint = false;
   bool _showBanner = true;
   bool _bannerExpanded = false;
-  String _loadedHistoryDate = '';
 
   @override
   void initState() {
@@ -72,7 +70,6 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
         if (!mounted) return;
         setState(() {
           _messages.clear();
-          _loadedHistoryDate = '';
         });
         return;
       }
@@ -82,7 +79,6 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
         if (!mounted) return;
         setState(() {
           _messages.clear();
-          _loadedHistoryDate = savedDate;
         });
         return;
       }
@@ -105,7 +101,6 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
         _messages
           ..clear()
           ..addAll(history);
-        _loadedHistoryDate = savedDate;
       });
       _scrollToBottom();
     } catch (_) {}
@@ -122,7 +117,6 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
       }
       await prefs.setString('aiChatHistory', jsonEncode(_messages));
       await prefs.setString('aiChatDate', today);
-      _loadedHistoryDate = today;
     } catch (_) {}
   }
 
@@ -161,18 +155,6 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
         3: <dynamic>[],
         4: <dynamic>[],
       };
-
-  String _weekCacheKey() {
-    final monday = DateFormat('yyyyMMdd').format(_currentMonday);
-    return [
-      'weekCacheV1',
-      schoolUrl,
-      schoolName,
-      personType.toString(),
-      personId.toString(),
-      monday,
-    ].join('|');
-  }
 
   Map<int, List<dynamic>> _decodeWeek(Map<dynamic, dynamic> week) {
     final tempWeek = _emptyWeekData();
@@ -265,7 +247,6 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
   }
 
   String _contextDateLabel() {
-    final l = AppL10n.of(appLocaleNotifier.value);
     final icu = _icuLocale(appLocaleNotifier.value);
     return DateFormat('EEEE, dd.MM', icu).format(DateTime.now());
   }
@@ -403,7 +384,6 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
   }
 
   String _contextBannerText() {
-    final l = AppL10n.of(appLocaleNotifier.value);
     final lessonCount = _lessonCountToday();
     final examCount = _examCountThisWeek();
     final lessonText = lessonCount == 1
@@ -471,16 +451,6 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
     });
   }
 
-  void _scrollToFirstChip() {
-    final context = _firstChipKey.currentContext;
-    if (context == null) return;
-    Scrollable.ensureVisible(
-      context,
-      duration: const Duration(milliseconds: 280),
-      curve: _kSoftBounce,
-      alignment: 0.5,
-    );
-  }
 
   Future<void> _openSettings() async {
     await Navigator.of(context).push(
@@ -1290,7 +1260,7 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
 
   Widget _buildInput(ColorScheme cs) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(16, 8, 16, 16 + MediaQuery.of(context).padding.bottom + 104),
+      padding: EdgeInsets.fromLTRB(16, 8, 16, 16 + MediaQuery.of(context).padding.bottom),
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
@@ -1439,7 +1409,6 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
                   itemCount: _messages.length + (_thinking ? 1 : 0),
                   itemBuilder: (context, index) {
                     if (index == _messages.length) return _buildTypingBubble(cs);
-                    final msg = _messages[index];
                     return _buildBubble(cs, index);
                   },
                 ),
@@ -1497,13 +1466,21 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
 
     if (_loading) {
       return Scaffold(
-        appBar: AppBar(title: Text(l.aiTitle)),
+        backgroundColor: Colors.transparent,
+        appBar: RoundedBlurAppBar(
+          title: Text(l.aiTitle),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded),
+            onPressed: widget.onBackToTimetable ?? () => Navigator.of(context).maybePop(),
+          ),
+        ),
         body: Center(child: CircularProgressIndicator(color: cs.primary)),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(
+      backgroundColor: Colors.transparent,
+      appBar: RoundedBlurAppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: widget.onBackToTimetable ?? () => Navigator.of(context).maybePop(),
@@ -1606,10 +1583,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   Future<void> _runAutoUpdateCheck() async {
     try {
       final info = await PackageInfo.fromPlatform();
-      final currentVersion = info.version;
+      final currentVersion = '${info.version}+${info.buildNumber}';
 
       final resp = await http.get(
-        Uri.parse('https://api.github.com/repos/norobb/Untis_Neo/releases/latest'),
+        Uri.parse('https://api.github.com/repos/$updateRepo/releases/latest'),
         headers: const {'Accept': 'application/vnd.github+json'},
       );
       if (resp.statusCode != 200) return;
@@ -1639,36 +1616,25 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
       if (comp < 0) {
         if (!mounted) return;
-        final htmlUrl = (data['html_url'] ?? 'https://github.com/norobb/Untis_Neo/releases').toString();
+        final htmlUrl = (data['html_url'] ?? 'https://github.com/$updateRepo/releases').toString();
         
+        final l = AppL10n.of(appLocaleNotifier.value);
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: Text(
-              appLocaleNotifier.value.toLowerCase().startsWith('de') 
-                ? 'Update verfügbar' 
-                : 'Update available'
-            ),
-            content: Text(
-              appLocaleNotifier.value.toLowerCase().startsWith('de')
-                ? 'Eine neue Version ($tag) von UntisPlus ist verfügbar. Möchtest du sie herunterladen?'
-                : 'A new version ($tag) of UntisPlus is available. Do you want to download it?'
-            ),
+            title: Text(l.updateAvailableTitle),
+            content: Text(l.updateAvailableDesc(tag)),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: Text(
-                  appLocaleNotifier.value.toLowerCase().startsWith('de') ? 'Später' : 'Later'
-                ),
+                child: Text(l.updateLater),
               ),
               FilledButton(
                 onPressed: () {
                   Navigator.pop(ctx);
                   url_launcher.launchUrlString(htmlUrl, mode: url_launcher.LaunchMode.externalApplication);
                 },
-                child: Text(
-                  appLocaleNotifier.value.toLowerCase().startsWith('de') ? 'Aktualisieren' : 'Update'
-                ),
+                child: Text(l.updateNow),
               ),
             ],
           ),
@@ -1867,23 +1833,32 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               },
             ),
           ),
-          // Floating nav bar
-          Positioned(
-            left: 16,
-            right: 16,
-            bottom: mq.padding.bottom + 16,
-            child: ValueListenableBuilder<String>(
-              valueListenable: appLocaleNotifier,
-              builder: (context, locale, _) {
-                return _buildFloatingNavBar(context, cs);
-              },
+          // Backdrop for tutorial
+          if (_showTutorial)
+            Positioned.fill(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                child: Container(color: Colors.black.withValues(alpha: 0.45)),
+              ),
             ),
-          ),
+          // Floating nav bar
+          if (_selectedIndex != 6)
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: mq.padding.bottom + 16,
+              child: ValueListenableBuilder<String>(
+                valueListenable: appLocaleNotifier,
+                builder: (context, locale, _) {
+                  return _buildFloatingNavBar(context, cs);
+                },
+              ),
+            ),
           if (_showTutorial)
             Positioned(
               left: 16,
               right: 16,
-              top: mq.padding.top + 10,
+              bottom: mq.padding.bottom + 120,
               child: Material(
                 color: Colors.transparent,
                 child: Container(

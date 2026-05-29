@@ -306,7 +306,18 @@ Future<void> _settingsSyncFromPrefs() async {
         (k, v) => MapEntry(k, (v as num).toInt()),
       );
     }
+    
+    final aliasesJson = prefs.getString('subjectAliases');
+    if (aliasesJson != null) {
+      final decoded = jsonDecode(aliasesJson) as Map<String, dynamic>;
+      subjectAliasesNotifier.value = decoded.map(
+        (k, v) => MapEntry(k, v.toString()),
+      );
+    }
   } catch (_) {}
+
+  await loadSavedAccounts();
+  await saveCurrentAccount();
 
   await loadCustomBackgroundsFromPrefs(prefs);
 }
@@ -384,6 +395,14 @@ class SettingsHubPage extends StatelessWidget {
         title: l.settingsHubUpdatesAbout,
         subtitle: l.settingsAppVersion,
         pageBuilder: () => const SettingsAboutUpdatesPage(),
+      ),
+      _SettingsHubItem(
+        icon: Icons.widgets_rounded,
+        iconBackground: const Color(0xFFE2D8FF),
+        iconColor: const Color(0xFF4A148C),
+        title: 'Homescreen Widget',
+        subtitle: 'Farben anpassen',
+        pageBuilder: () => const SettingsWidgetPage(),
       ),
     ];
 

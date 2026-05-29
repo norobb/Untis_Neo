@@ -660,7 +660,35 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     await prefs.setInt('personId', personId);
     await prefs.remove('sessionId');
 
-    if (mounted) _nextPage();
+    setState(() => _isLogginIn = false);
+  }
+
+  Future<void> _scanQrCode() async {
+    final result = await Navigator.of(context).push<String>(
+      MaterialPageRoute(builder: (_) => const QrScannerPage()),
+    );
+    if (result != null && result.startsWith('untis://setschool')) {
+      final uri = Uri.parse(result.replaceFirst('untis://', 'https://'));
+      final url = uri.queryParameters['url'];
+      final school = uri.queryParameters['school'];
+      final user = uri.queryParameters['user'];
+      final key = uri.queryParameters['key'];
+
+      if (url != null && school != null && user != null && key != null) {
+        setState(() {
+          _serverController.text = url;
+          _schoolController.text = school;
+          _userController.text = user;
+          _passwordController.text = key;
+          _useLoginKey = true;
+          _manualSchoolEntry = true;
+        });
+        _handleLogin();
+      } else {
+        final l = AppL10n.of(appLocaleNotifier.value);
+        _showError(l.loginInvalidQrCode);
+      }
+    }
   }
 
   void _showError(String msg) {
@@ -1501,6 +1529,38 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
               ),
               const SizedBox(height: 12),
             ],
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: _scanQrCode,
+                icon: const Icon(Icons.qr_code_scanner),
+                label: Text(l.loginScanQrCode),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(child: Divider(color: Theme.of(context).colorScheme.outlineVariant)),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    l.loginOr,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Expanded(child: Divider(color: Theme.of(context).colorScheme.outlineVariant)),
+              ],
+            ),
+            const SizedBox(height: 24),
             _buildField(_userController, l.loginUsername, Icons.person),
             const SizedBox(height: 12),
             Wrap(

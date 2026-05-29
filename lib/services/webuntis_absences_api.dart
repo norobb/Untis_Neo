@@ -51,7 +51,7 @@ class WebUntisAbsencesApi {
   static const String _clientAgent =
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
-  static Future<List<Absence>> fetchAbsences() async {
+  static Future<List<Absence>> fetchAbsences({DateTime? startRange, DateTime? endRange}) async {
     if (app_state.demoModeNotifier.value) {
       return [
         Absence(
@@ -98,8 +98,8 @@ class WebUntisAbsencesApi {
       }
 
       final now = DateTime.now();
-      final start = now.subtract(const Duration(days: 365)); // Fetch for a whole year
-      final end = now.add(const Duration(days: 30));
+      final start = startRange ?? now.subtract(const Duration(days: 365));
+      final end = endRange ?? now.add(const Duration(days: 30));
       final startStr = DateFormat('yyyyMMdd').format(start);
       final endStr = DateFormat('yyyyMMdd').format(end);
 

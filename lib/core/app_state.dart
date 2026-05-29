@@ -3,6 +3,7 @@ part of '../main.dart';
 // ── APP VERSION ────────────────────────────────────────────────────────────
 String appVersion = '0.0.0';
 String appBuildNumber = '0';
+String updateRepo = 'norobb/Untis_Neo';
 
 String sessionID = "";
 String schoolUrl = "";
@@ -178,6 +179,7 @@ Future<void> _unhideSubject(String key) async {
 }
 
 final ValueNotifier<Map<String, int>> subjectColorsNotifier = ValueNotifier({});
+final ValueNotifier<Map<String, String>> subjectAliasesNotifier = ValueNotifier({});
 
 final ValueNotifier<Set<String>> knownSubjectsNotifier = ValueNotifier({});
 
@@ -202,6 +204,34 @@ Future<void> _clearSubjectColor(String key) async {
     'subjectColors',
     jsonEncode(Map<String, dynamic>.from(updated)),
   );
+}
+
+Future<void> _setSubjectAlias(String key, String alias) async {
+  if (key.isEmpty) return;
+  final updated = Map<String, String>.from(subjectAliasesNotifier.value)
+    ..[key] = alias;
+  subjectAliasesNotifier.value = updated;
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString(
+    'subjectAliases',
+    jsonEncode(Map<String, dynamic>.from(updated)),
+  );
+}
+
+Future<void> _clearSubjectAlias(String key) async {
+  final updated = Map<String, String>.from(subjectAliasesNotifier.value)
+    ..remove(key);
+  subjectAliasesNotifier.value = updated;
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString(
+    'subjectAliases',
+    jsonEncode(Map<String, dynamic>.from(updated)),
+  );
+}
+
+String _getSubjectAlias(String key) {
+  final aliases = subjectAliasesNotifier.value;
+  return aliases[key]?.isNotEmpty == true ? aliases[key]! : key;
 }
 
 String _formatUntisTime(String time) {
@@ -232,3 +262,77 @@ Future<bool> _reAuthenticate() async {
   } catch (_) {}
   return false;
 }
+
+final ValueNotifier<List<Map<String, dynamic>>> savedAccountsNotifier = ValueNotifier([]);
+
+Future<void> loadSavedAccounts() async {
+  final prefs = await SharedPreferences.getInstance();
+  final raw = prefs.getString('savedAccounts');
+  if (raw != null) {
+    try {
+      final decoded = jsonDecode(raw) as List;
+      savedAccountsNotifier.value = decoded.cast<Map<String, dynamic>>();
+    } catch (_) {}
+  }
+}
+
+Future<void> saveCurrentAccount() async {
+  final prefs = await SharedPreferences.getInstance();
+  final username = prefs.getString('username') ?? '';
+  final schoolUrl = prefs.getString('schoolUrl') ?? '';
+  
+  if (username.isEmpty || schoolUrl.isEmpty) return;
+
+  final Map<String, dynamic> accountData = {
+    'username': username,
+    'password': prefs.getString('password') ?? '',
+    'schoolUrl': schoolUrl,
+    'schoolName': prefs.getString('schoolName') ?? '',
+    'loginCredentialMode': prefs.getString('loginCredentialMode') ?? 'password',
+    'sessionId': prefs.getString('sessionId') ?? '',
+    'personId': prefs.getInt('personId') ?? 0,
+    'personType': prefs.getInt('personType') ?? 0,
+  };
+
+  final currentList = List<Map<String, dynamic>>.from(savedAccountsNotifier.value);
+  
+  // Remove if exists to replace with updated data
+  currentList.removeWhere((acc) => acc['username'] == username && acc['schoolUrl'] == schoolUrl);
+  
+  currentList.add(accountData);
+  savedAccountsNotifier.value = currentList;
+  
+  await prefs.setString('savedAccounts', jsonEncode(currentList));
+}
+
+Future<void> removeSavedAccount(Map<String, dynamic> account) async {
+  final currentList = List<Map<String, dynamic>>.from(savedAccountsNotifier.value);
+  currentList.removeWhere((acc) => acc['username'] == account['username'] && acc['schoolUrl'] == account['schoolUrl']);
+  savedAccountsNotifier.value = currentList;
+  
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString('savedAccounts', jsonEncode(currentList));
+}
+
+Future<bool> switchToAccount(Map<String, dynamic> account) async {
+  await saveCurrentAccount(); // Save current before switching
+  
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString('username', account['username'] ?? '');
+  await prefs.setString('password', account['password'] ?? '');
+  await prefs.setString('schoolUrl', account['schoolUrl'] ?? '');
+  await prefs.setString('schoolName', account['schoolName'] ?? '');
+  await prefs.setString('loginCredentialMode', account['loginCredentialMode'] ?? 'password');
+  await prefs.setString('sessionId', account['sessionId'] ?? '');
+  await prefs.setInt('personId', account['personId'] ?? 0);
+  await prefs.setInt('personType', account['personType'] ?? 0);
+  
+  sessionID = account['sessionId'] ?? '';
+  schoolUrl = account['schoolUrl'] ?? '';
+  schoolName = account['schoolName'] ?? '';
+  personId = account['personId'] ?? 0;
+  personType = account['personType'] ?? 0;
+  
+  return await _reAuthenticate();
+}
+

@@ -43,6 +43,28 @@ class SettingsSubjectsPage extends StatelessWidget {
             const SizedBox(height: 12),
             Card.filled(
               color: cs.surfaceContainerHigh,
+              child: ListTile(
+                leading: const Icon(Icons.text_fields_rounded),
+                title: Text(
+                  'Eigene Fächer-Namen',
+                  style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+                ),
+                subtitle: Text(
+                  'Kürzel wie "M" durch "Mathematik 🧮" ersetzen.',
+                  style: GoogleFonts.outfit(),
+                ),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    _buildBouncyRoute(const SettingsSubjectAliasesPage()),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
+            Card.filled(
+              color: cs.surfaceContainerHigh,
               child: ValueListenableBuilder<Set<String>>(
                 valueListenable: hiddenSubjectsNotifier,
                 builder: (context, hidden, _) {

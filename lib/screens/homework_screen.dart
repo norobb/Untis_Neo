@@ -1,6 +1,8 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:untisplus/services/webuntis_homework_api.dart';
+import 'package:confetti/confetti.dart';
 // To access shared UI components like _glassContainer if they are public, but they are private inside main.dart part 'shared_ui.dart'
 // Wait, _glassContainer is private in main.dart?
 // I need to check if they are exposed. For now, I will use standard Flutter blur or see how main_navigation_screen uses it.
@@ -18,10 +20,19 @@ class _HomeworkScreenState extends State<HomeworkScreen> {
   bool _isLoading = true;
   String? _error;
 
+  late ConfettiController _confettiController;
+
   @override
   void initState() {
     super.initState();
+    _confettiController = ConfettiController(duration: const Duration(seconds: 2));
     _loadHomework();
+  }
+
+  @override
+  void dispose() {
+    _confettiController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadHomework() async {
@@ -117,6 +128,85 @@ class _HomeworkScreenState extends State<HomeworkScreen> {
     }
   }
 
+  Widget _buildProgressSummary() {
+    if (_homeworks.isEmpty) return const SizedBox.shrink();
+
+    final int total = _homeworks.length;
+    final int done = _homeworks.where((h) => h.isDone).length;
+    final double progress = total == 0 ? 0 : done / total;
+
+    final cs = Theme.of(context).colorScheme;
+
+    String message;
+    if (progress == 0) {
+      message = "Auf geht's! Packen wir es an.";
+    } else if (progress < 0.5) {
+      message = "Guter Start! Bleib dran.";
+    } else if (progress < 1) {
+      message = "Fast geschafft! Endspurt.";
+    } else {
+      message = "Klasse! Alles erledigt. Zeit zum Entspannen.";
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 24.0),
+      child: _buildGlassCard(
+        child: Row(
+          children: [
+            SizedBox(
+              width: 60,
+              height: 60,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  CircularProgressIndicator(
+                    value: progress,
+                    strokeWidth: 6,
+                    backgroundColor: cs.outlineVariant.withValues(alpha: 0.3),
+                    color: progress == 1 ? Colors.green : cs.primary,
+                    strokeCap: StrokeCap.round,
+                  ),
+                  Center(
+                    child: Text(
+                      '${(progress * 100).toInt()}%',
+                      style: GoogleFonts.outfit(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$done von $total erledigt',
+                    style: GoogleFonts.outfit(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 18,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    message,
+                    style: GoogleFonts.outfit(
+                      color: cs.onSurfaceVariant,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   String _formatDate(String dateStr) {
     try {
       final dt = DateTime.parse(dateStr);
@@ -130,8 +220,10 @@ class _HomeworkScreenState extends State<HomeworkScreen> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
 
-    return Scaffold(
-      backgroundColor: Colors.transparent, // For custom background
+    return Stack(
+      children: [
+        Scaffold(
+          backgroundColor: Colors.transparent, // For custom background
       appBar: AppBar(
         title: Text(
           'Hausaufgaben',
@@ -178,11 +270,17 @@ class _HomeworkScreenState extends State<HomeworkScreen> {
                 ),
               ),
             )
-          : ListView.builder(
+          : RefreshIndicator(
+              onRefresh: _loadHomework,
+              color: cs.primary,
+              child: ListView.builder(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 132),
-              itemCount: _homeworks.length,
-              itemBuilder: (context, index) {
-                final hw = _homeworks[index];
+              itemCount: _homeworks.length + 1,
+              itemBuilder: (ctx, index) {
+                if (index == 0) return _buildProgressSummary();
+                
+                final hwIndex = index - 1;
+                final hw = _homeworks[hwIndex];
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12.0),
                   child: _buildGlassCard(
@@ -192,14 +290,18 @@ class _HomeworkScreenState extends State<HomeworkScreen> {
                         Checkbox(
                           value: hw.isDone,
                           onChanged: (v) async {
+                            final bool isNowDone = v ?? false;
                             final bool success =
                                 await WebUntisHomeworkApi.setHomeworkDone(
                                   hw.id,
-                                  v ?? false,
+                                  isNowDone,
                                 );
                             if (success) {
+                              if (isNowDone) {
+                                _confettiController.play();
+                              }
                               setState(() {
-                                _homeworks[index] = Homework(
+                                _homeworks[hwIndex] = Homework(
                                   id: hw.id,
                                   subjectCode: hw.subjectCode,
                                   subjectLongName: hw.subjectLongName,
@@ -207,20 +309,19 @@ class _HomeworkScreenState extends State<HomeworkScreen> {
                                   description: hw.description,
                                   remark: hw.remark,
                                   dueDate: hw.dueDate,
-                                  isDone: v ?? false,
+                                  isDone: isNowDone,
                                   attachmentsCount: hw.attachmentsCount,
                                 );
                               });
                             } else {
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Fehler beim Aktualisieren der Hausaufgabe',
-                                    ),
+                              if (!ctx.mounted) return;
+                              ScaffoldMessenger.of(ctx).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Fehler beim Aktualisieren der Hausaufgabe',
                                   ),
-                                );
-                              }
+                                ),
+                              );
                             }
                           },
                         ),
@@ -347,6 +448,21 @@ class _HomeworkScreenState extends State<HomeworkScreen> {
                 );
               },
             ),
+          ),
+        ),
+        Align(
+          alignment: Alignment.topCenter,
+          child: ConfettiWidget(
+            confettiController: _confettiController,
+            blastDirection: pi / 2, // point downwards
+            maxBlastForce: 10,
+            minBlastForce: 2,
+            emissionFrequency: 0.05,
+            numberOfParticles: 30,
+            gravity: 0.1,
+          ),
+        ),
+      ],
     );
   }
 }

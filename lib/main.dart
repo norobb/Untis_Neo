@@ -15,8 +15,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'services/webuntis_homework_api.dart';
 import 'services/webuntis_exams_api.dart';
-import 'services/webuntis_absences_api.dart';
 import 'screens/absences_page.dart';
+import 'core/calendar_exporter.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -34,8 +34,11 @@ import 'services/background_service.dart';
 import 'services/backup_service.dart';
 import 'services/demo_mode_service.dart';
 import 'widgets/rounded_blur_app_bar.dart';
+import 'package:home_widget/home_widget.dart';
+import 'screens/qr_scanner_page.dart';
 import 'web/file_download_helper.dart'
   if (dart.library.io) 'web/file_download_helper_stub.dart';
+import 'core/widget_updater.dart';
 
 part 'core/school_models.dart';
 part 'core/design_tokens.dart';
@@ -51,10 +54,13 @@ part 'screens/settings/settings_timetable_page.dart';
 part 'screens/settings/settings_notifications_page.dart';
 part 'screens/settings/settings_appearance_page.dart';
 part 'screens/settings/settings_subjects_page.dart';
+part 'screens/settings/settings_subject_aliases_page.dart';
 part 'screens/settings/settings_ai_page.dart';
 part 'screens/settings/settings_backup_page.dart';
 part 'screens/settings/settings_account_page.dart';
+part 'screens/settings/add_account_page.dart';
 part 'screens/settings/settings_about_updates_page.dart';
+part 'screens/settings/settings_widget_page.dart';
 part 'widgets/animated_background.dart';
 part 'widgets/custom_background_view.dart';
 
@@ -86,7 +92,9 @@ void main() async {
   final bool onboardingCompleted =
       prefs.getBool('onboardingCompleted') ?? false;
   final bool tutorialCompleted = prefs.getBool('tutorialCompleted') ?? false;
+  updateRepo = prefs.getString('updateRepo') ?? 'norobb/Untis_Neo';
 
+  appLocaleNotifier.value = prefs.getString('appLocale') ?? 'de';
   if (isLoggedIn) {
     sessionID = prefs.getString('sessionId') ?? "";
     schoolUrl = prefs.getString('schoolUrl') ?? "";
@@ -1669,13 +1677,14 @@ class _WeeklyTimetablePageState extends State<WeeklyTimetablePage>
                           );
                           final dim = isToday && endMin <= nowMin;
                           final isCancelled = (l['code'] ?? '') == 'cancelled';
-                          final subject =
+                          final subjectRaw =
                               l['_subjectShort']?.toString().isNotEmpty == true
                               ? l['_subjectShort'].toString()
                               : (l['_subjectLong']?.toString().isNotEmpty ==
                                         true
                                     ? l['_subjectLong'].toString()
                                     : '?');
+                          final subject = _getSubjectAlias(subjectRaw);
                           final room = l['_room']?.toString() ?? '';
                           final teacher = l['_teacher']?.toString() ?? '';
 
@@ -2089,18 +2098,17 @@ class _WeeklyTimetablePageState extends State<WeeklyTimetablePage>
                                         endMin <= nowMin;
                                     final isCancelled =
                                         (l['code'] ?? '') == 'cancelled';
-                                    final subject =
-                                        l['_subjectShort']
-                                                ?.toString()
-                                                .isNotEmpty ==
-                                            true
-                                        ? l['_subjectShort'].toString()
-                                        : (l['_subjectLong']
-                                                      ?.toString()
-                                                      .isNotEmpty ==
-                                                  true
-                                              ? l['_subjectLong'].toString()
-                                              : '?');
+                                    final subjRaw =
+                                        l['_subjectShort']?.toString().isNotEmpty ==
+                                                true
+                                            ? l['_subjectShort'].toString()
+                                            : (l['_subjectLong']
+                                                          ?.toString()
+                                                          .isNotEmpty ==
+                                                      true
+                                                  ? l['_subjectLong'].toString()
+                                                  : '?');
+                                    final subject = _getSubjectAlias(subjRaw);
                                     final room = l['_room']?.toString() ?? '';
                                     final teacher =
                                         l['_teacher']?.toString() ?? '';
@@ -2733,6 +2741,7 @@ class _WeeklyTimetablePageState extends State<WeeklyTimetablePage>
         requestPersonType: requestPersonType,
         weekData: tempWeek,
       );
+      await updateHomescreenWidget();
 
       if (!mounted) return;
       setState(() {
@@ -3104,6 +3113,30 @@ class _WeeklyTimetablePageState extends State<WeeklyTimetablePage>
         centerTitle: true,
         actions: [
           IconButton(
+            tooltip: l.timetableExportCalendar,
+            icon: const Icon(Icons.event_available_rounded),
+            onPressed: () async {
+              try {
+                await CalendarExporter.exportWeek(_weekData, _currentMonday);
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(l.timetableExportSuccess),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              } catch (e) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('${l.timetableExportFailed}$e'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
+            },
+          ),
+          IconButton(
             tooltip: l.freeRoomsTitle,
             icon: const Icon(Icons.meeting_room_outlined),
             onPressed: _showFreeRoomsDialog,
@@ -3144,9 +3177,12 @@ class _WeeklyTimetablePageState extends State<WeeklyTimetablePage>
               ),
       ),
       body: _AnimatedBackground(
-        child: _loading
-            ? const Center(child: CircularProgressIndicator())
-            : (_loadError != null)
+        child: ValueListenableBuilder<Map<String, String>>(
+          valueListenable: subjectAliasesNotifier,
+          builder: (context, aliases, _) {
+            return _loading
+                ? const Center(child: CircularProgressIndicator())
+                : (_loadError != null)
             ? Center(
                 child: Padding(
                   padding: const EdgeInsets.all(24),
@@ -3239,11 +3275,12 @@ class _WeeklyTimetablePageState extends State<WeeklyTimetablePage>
                     (dayIndex) => _buildGridView(dayIndex),
                   ),
                 ),
-              ),
+              );
+          },
+        ),
       ),
     );
   }
-
 }
 
 // --- PRÜFUNGEN ---
@@ -4503,9 +4540,10 @@ String _formatWeekForAi(Map<int, List<dynamic>> weekData, DateTime monday) {
       for (final lsn in lessons) {
         final start = _formatUntisTime(lsn['startTime'].toString());
         final end = _formatUntisTime(lsn['endTime'].toString());
-        final subj = lsn['_subjectLong']?.toString().isNotEmpty == true
+        final subjRaw = lsn['_subjectLong']?.toString().isNotEmpty == true
             ? lsn['_subjectLong'].toString()
             : lsn['_subjectShort']?.toString() ?? '?';
+        final subj = _getSubjectAlias(subjRaw);
         final room = lsn['_room']?.toString() ?? '';
         final teacher = lsn['_teacher']?.toString() ?? '';
         final cancelled = (lsn['code'] ?? '') == 'cancelled';
@@ -4770,9 +4808,10 @@ class _TimetableChatSheetState extends State<_TimetableChatSheet> {
     for (final lsn in lessons) {
       final start = _formatUntisTime(lsn['startTime'].toString());
       final end = _formatUntisTime(lsn['endTime'].toString());
-      final subj = lsn['_subjectLong']?.toString().isNotEmpty == true
+      final subjRaw = lsn['_subjectLong']?.toString().isNotEmpty == true
           ? lsn['_subjectLong'].toString()
           : lsn['_subjectShort']?.toString() ?? '?';
+      final subj = _getSubjectAlias(subjRaw);
       final room = lsn['_room']?.toString() ?? '';
       final cancelled = (lsn['code'] ?? '') == 'cancelled';
       buf.write('- $start-$end $subj');
