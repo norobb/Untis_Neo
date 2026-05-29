@@ -36,17 +36,17 @@ class TimetableWidgetProvider : HomeWidgetProvider() {
 
                 try {
                     val bgColor = android.graphics.Color.parseColor(bgColorStr)
-                    views.setInt(R.id.widget_container, "setBackgroundColor", bgColor)
+                    setInt(R.id.widget_container, "setBackgroundColor", bgColor)
                 } catch (e: Exception) {}
 
                 try {
                     val textColor = android.graphics.Color.parseColor(textColorStr)
                     val secTextColor = android.graphics.Color.parseColor(secTextColorStr)
                     
-                    views.setTextColor(R.id.widget_subject, textColor)
-                    views.setTextColor(R.id.widget_title, secTextColor)
-                    views.setTextColor(R.id.widget_time, textColor)
-                    views.setTextColor(R.id.widget_room, secTextColor)
+                    setTextColor(R.id.widget_subject, textColor)
+                    setTextColor(R.id.widget_title, secTextColor)
+                    setTextColor(R.id.widget_time, textColor)
+                    setTextColor(R.id.widget_room, secTextColor)
                 } catch (e: Exception) {}
             }
 
