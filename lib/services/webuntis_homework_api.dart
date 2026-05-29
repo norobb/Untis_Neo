@@ -153,6 +153,21 @@ class WebUntisHomeworkApi {
         if (res.statusCode == 200) {
           final decoded = jsonDecode(res.body);
           final hws = decoded['data']?['homeworks'] as List?;
+          final lessonsList = decoded['data']?['lessons'] as List? ?? [];
+          final recordsList = decoded['data']?['records'] as List? ?? [];
+
+          final Map<int, String> lessonSubjects = {};
+          for (final l in lessonsList) {
+            final id = l['id'] as int?;
+            final subj = l['subject']?.toString();
+            if (id != null && subj != null) lessonSubjects[id] = subj;
+          }
+          for (final r in recordsList) {
+            final id = r['lessonId'] as int? ?? r['id'] as int?;
+            final subj = r['subject']?.toString();
+            if (id != null && subj != null) lessonSubjects[id] = subj;
+          }
+
           if (hws != null && hws.isNotEmpty) {
             return hws.map((hw) {
               final due = (hw['dueDate'] ?? 0).toString();
@@ -161,9 +176,12 @@ class WebUntisHomeworkApi {
                 dueStr = '${due.substring(0, 4)}-${due.substring(4, 6)}-${due.substring(6, 8)}';
               }
 
+              final lessonId = hw['lessonId'] as int?;
+              final mappedSubject = lessonId != null ? lessonSubjects[lessonId] : null;
+
               return Homework(
                 id: (hw['id'] ?? 0).toString(),
-                subjectCode: (hw['subject'] ?? 'N/A').toString(),
+                subjectCode: (hw['subject'] ?? mappedSubject ?? 'N/A').toString(),
                 description: (hw['text'] ?? '').toString(),
                 remark: (hw['remark'] ?? '').toString(),
                 dueDate: dueStr,
