@@ -11,14 +11,30 @@ Future<void> updateHomescreenWidget() async {
     final schoolUrl = prefs.getString('schoolUrl') ?? '';
     final personId = prefs.getInt('personId') ?? 0;
     
+    final schoolName = prefs.getString('schoolName') ?? '';
+    final personType = prefs.getInt('personType') ?? 2;
+    
     // Find next lesson
     final now = DateTime.now();
-    final todayStr = DateFormat('yyyyMMdd').format(now);
+    final currentMonday = now.subtract(Duration(days: now.weekday - 1));
+    final mondayStr = DateFormat('yyyyMMdd').format(currentMonday);
     
-    final weekDataStr = prefs.getString('weekData_${schoolUrl}_${personId}_$todayStr');
+    final cacheKey = [
+      'weekCacheV1',
+      schoolUrl,
+      schoolName,
+      personType.toString(),
+      personId.toString(),
+      mondayStr,
+    ].join('|');
+    
+    final weekDataStr = prefs.getString(cacheKey);
     if (weekDataStr == null) return;
     
-    final Map<String, dynamic> rawMap = jsonDecode(weekDataStr);
+    final decodedPayload = jsonDecode(weekDataStr);
+    if (decodedPayload is! Map || !decodedPayload.containsKey('weekData')) return;
+    
+    final Map<String, dynamic> rawMap = decodedPayload['weekData'];
     
     // We only care about today for the 2x2 widget
     final dayIndex = now.weekday - 1; // 0 for Monday
