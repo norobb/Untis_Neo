@@ -51,53 +51,67 @@ Future<void> updateHomescreenWidget() async {
     
     final nowInt = now.hour * 100 + now.minute;
     
-    Map<String, dynamic>? nextLesson;
+    final lessonCount = prefs.getInt('widget_lesson_count') ?? 3;
+    final upcomingLessons = <Map<String, dynamic>>[];
     
     for (final l in lessons) {
       final endTime = int.tryParse(l['endTime']?.toString() ?? '0') ?? 0;
       if (endTime > nowInt) {
-        nextLesson = l as Map<String, dynamic>;
-        break; // First lesson that ends after now
+        upcomingLessons.add(l as Map<String, dynamic>);
+        if (upcomingLessons.length >= lessonCount) break;
       }
     }
     
-    if (nextLesson == null) {
+    if (upcomingLessons.isEmpty) {
       await _clearWidget();
       return;
     }
-    
-    final isCancelled = (nextLesson['code'] ?? '') == 'cancelled';
-    if (isCancelled) {
-      // Logic for cancelled could be different, but for now we just show it.
-      await HomeWidget.saveWidgetData<String>('widget_next_subject', 'Fällt aus');
-      await HomeWidget.saveWidgetData<String>('widget_next_time', '');
-      await HomeWidget.saveWidgetData<String>('widget_next_room', '');
-    } else {
-      final subjRaw = nextLesson['_subjectLong']?.toString().isNotEmpty == true 
-          ? nextLesson['_subjectLong'].toString() 
-          : nextLesson['_subjectShort']?.toString() ?? '?';
+
+    final aliasesStr = prefs.getString('subjectAliases');
+    Map<String, dynamic> aliases = {};
+    if (aliasesStr != null) {
+      try {
+        aliases = jsonDecode(aliasesStr) as Map<String, dynamic>;
+      } catch (_) {}
+    }
+
+    Future<void> saveLesson(Map<String, dynamic>? lesson, String suffix) async {
+      if (lesson == null) {
+        await HomeWidget.saveWidgetData<String>('widget_next_subject$suffix', '');
+        await HomeWidget.saveWidgetData<String>('widget_next_time$suffix', '');
+        await HomeWidget.saveWidgetData<String>('widget_next_room$suffix', '');
+        return;
+      }
+
+      final isCancelled = (lesson['code'] ?? '') == 'cancelled';
+      if (isCancelled) {
+        await HomeWidget.saveWidgetData<String>('widget_next_subject$suffix', 'Fällt aus');
+        await HomeWidget.saveWidgetData<String>('widget_next_time$suffix', '');
+        await HomeWidget.saveWidgetData<String>('widget_next_room$suffix', '');
+        return;
+      }
+
+      final subjRaw = lesson['_subjectLong']?.toString().isNotEmpty == true 
+          ? lesson['_subjectLong'].toString() 
+          : lesson['_subjectShort']?.toString() ?? '?';
       
-      // Wait, we can't easily access _getSubjectAlias here since it relies on ValueNotifier.
-      // We will just read from SharedPreferences directly.
-      final aliasesStr = prefs.getString('subjectAliases');
       var subj = subjRaw;
-      if (aliasesStr != null) {
-        try {
-          final aliases = jsonDecode(aliasesStr) as Map<String, dynamic>;
-          if (aliases.containsKey(subjRaw) && aliases[subjRaw].toString().isNotEmpty) {
-            subj = aliases[subjRaw].toString();
-          }
-        } catch (_) {}
+      if (aliases.containsKey(subjRaw) && aliases[subjRaw].toString().isNotEmpty) {
+        subj = aliases[subjRaw].toString();
       }
       
-      final start = _formatTime(nextLesson['startTime']?.toString() ?? '');
-      final end = _formatTime(nextLesson['endTime']?.toString() ?? '');
-      final room = nextLesson['_room']?.toString() ?? '';
+      final start = _formatTime(lesson['startTime']?.toString() ?? '');
+      final end = _formatTime(lesson['endTime']?.toString() ?? '');
+      final room = lesson['_room']?.toString() ?? '';
       
-      await HomeWidget.saveWidgetData<String>('widget_next_subject', subj);
-      await HomeWidget.saveWidgetData<String>('widget_next_time', '$start - $end');
-      await HomeWidget.saveWidgetData<String>('widget_next_room', room);
+      await HomeWidget.saveWidgetData<String>('widget_next_subject$suffix', subj);
+      await HomeWidget.saveWidgetData<String>('widget_next_time$suffix', '$start - $end');
+      await HomeWidget.saveWidgetData<String>('widget_next_room$suffix', room);
     }
+
+    await saveLesson(upcomingLessons.isNotEmpty ? upcomingLessons[0] : null, '');
+    await saveLesson(upcomingLessons.length > 1 ? upcomingLessons[1] : null, '2');
+    await saveLesson(upcomingLessons.length > 2 ? upcomingLessons[2] : null, '3');
     
     await HomeWidget.updateWidget(name: 'TimetableWidgetProvider');
     
@@ -110,6 +124,12 @@ Future<void> _clearWidget() async {
   await HomeWidget.saveWidgetData<String>('widget_next_subject', 'Frei');
   await HomeWidget.saveWidgetData<String>('widget_next_time', '--:--');
   await HomeWidget.saveWidgetData<String>('widget_next_room', '');
+  await HomeWidget.saveWidgetData<String>('widget_next_subject2', '');
+  await HomeWidget.saveWidgetData<String>('widget_next_time2', '');
+  await HomeWidget.saveWidgetData<String>('widget_next_room2', '');
+  await HomeWidget.saveWidgetData<String>('widget_next_subject3', '');
+  await HomeWidget.saveWidgetData<String>('widget_next_time3', '');
+  await HomeWidget.saveWidgetData<String>('widget_next_room3', '');
   await HomeWidget.updateWidget(name: 'TimetableWidgetProvider');
 }
 

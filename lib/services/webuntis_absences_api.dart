@@ -128,13 +128,17 @@ class WebUntisAbsencesApi {
             if (decoded is List) {
               list = decoded;
             } else if (decoded is Map) {
-              list = (decoded['data']?['absences'] ?? decoded['absences'] ?? decoded['data'] ?? decoded['result'] ?? []) as List;
-              if (list.isEmpty && decoded['data'] is Map && decoded['data'].containsKey('absences')) {
-                list = decoded['data']['absences'] as List? ?? [];
+              final d = decoded['data'];
+              if (d is Map) {
+                list = [...(d['absences'] ?? []), ...(d['latenesses'] ?? [])];
+              } else {
+                list = (decoded['absences'] ?? decoded['data'] ?? decoded['result'] ?? []) as List;
               }
             }
-            if (list.isNotEmpty) {
-              return list.map((e) => Absence.fromJson(Map<String, dynamic>.from(e as Map))).toList();
+            // If the endpoint succeeded and gave us a valid structure, we consider it the working endpoint.
+            // Even if the list is empty, it means the user has 0 absences, which is a valid response.
+            if (decoded is Map && (decoded.containsKey('data') || decoded.containsKey('absences') || decoded.containsKey('result')) || decoded is List) {
+               return list.map((e) => Absence.fromJson(Map<String, dynamic>.from(e as Map))).toList();
             }
           }
         } catch (_) {}

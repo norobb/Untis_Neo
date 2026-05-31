@@ -38,27 +38,34 @@ class _SettingsBackupPageState extends State<SettingsBackupPage> {
     return 'untisplus-settings-$stamp.json';
   }
 
-  Future<String?> _resolveExportPath(AppL10n l) async {
+  Future<String?> _resolveExportPath(AppL10n l, Uint8List bytes) async {
     final fileName = _defaultFileName();
 
-    final savePath = await FilePicker.saveFile(
-      dialogTitle: l.settingsBackupExportDialogTitle,
-      fileName: fileName,
-      type: FileType.custom,
-      allowedExtensions: const ['json'],
-    );
-    if (savePath != null && savePath.isNotEmpty) {
-      return savePath;
-    }
+    try {
+      final savePath = await FilePicker.saveFile(
+        dialogTitle: l.settingsBackupExportDialogTitle,
+        fileName: fileName,
+        type: FileType.custom,
+        allowedExtensions: const ['json'],
+        bytes: bytes,
+      );
+      if (savePath != null && savePath.isNotEmpty) {
+        return savePath;
+      }
+    } catch (_) {}
 
     // Fallback for platforms where save dialogs are unavailable.
-    final folder = await FilePicker.getDirectoryPath(
-      dialogTitle: l.settingsBackupExportDialogTitle,
-    );
-    if (folder == null || folder.isEmpty) {
+    try {
+      final folder = await FilePicker.getDirectoryPath(
+        dialogTitle: l.settingsBackupExportDialogTitle,
+      );
+      if (folder == null || folder.isEmpty) {
+        return null;
+      }
+      return '$folder${Platform.pathSeparator}$fileName';
+    } catch (_) {
       return null;
     }
-    return '$folder${Platform.pathSeparator}$fileName';
   }
 
   Future<void> _exportToFile() async {
@@ -76,9 +83,15 @@ class _SettingsBackupPageState extends State<SettingsBackupPage> {
           _showSnack(l.settingsBackupExportSuccess);
           return;
         }
-        final savePath = await _resolveExportPath(l);
+        final bytes = Uint8List.fromList(utf8.encode(content));
+        final savePath = await _resolveExportPath(l, bytes);
         if (savePath == null || savePath.isEmpty) return;
-        await File(savePath).writeAsString(content);
+        
+        // Ensure file is written if FilePicker didn't write it automatically
+        try {
+          await File(savePath).writeAsString(content);
+        } catch (_) {}
+        
         _showSnack(l.settingsBackupExportSuccess);
       });
     } catch (e) {

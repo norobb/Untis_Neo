@@ -3395,11 +3395,15 @@ class _ExamsPageState extends State<ExamsPage> {
     return all;
   }
 
+  int _parseExamDate(Map<String, dynamic> e) {
+    final dateStr = (e['date'] ?? e['examDate'] ?? e['startDate'] ?? '0').toString().replaceAll('-', '');
+    return int.tryParse(dateStr) ?? 0;
+  }
+
   int _examSortKey(Map<String, dynamic> e) {
-    final date = e['date'] ?? e['examDate'] ?? e['startDate'] ?? 0;
-    final time = e['startTime'] ?? e['start'] ?? 0;
-    return (int.tryParse(date.toString()) ?? 0) * 10000 +
-        (int.tryParse(time.toString()) ?? 0);
+    final dateInt = _parseExamDate(e);
+    final timeStr = (e['startTime'] ?? e['start'] ?? '0').toString().replaceAll(':', '');
+    return dateInt * 10000 + (int.tryParse(timeStr) ?? 0);
   }
 
   String _formatExamDate(dynamic date) {
@@ -4057,7 +4061,7 @@ Antworte AUSSCHLIESSLICH im folgenden JSON Array Format (kein Markdown-Block, nu
     "description": "Ergänzende Infos oder leere Zeichenkette"
   }
 ]
-WICHTIG: Das Datum MUSS als String im Format YYYYMMDD ausgegeben werden. Fehlt das Jahr, leite es aus dem aktuellen Datum (${DateTime.now().year}) ab. Wenn die Datei keine Klausuren enthält, gib ein leeres Array [] zurück.''';
+WICHTIG: Das Datum MUSS als String im Format YYYYMMDD ausgegeben werden. Fehlt das Jahr, leite es aus dem aktuellen Datum (${DateTime.now().year}) ab. Wenn die Datei keine Klausuren enthält, gib ein leeres Array [] zurück. Gib NUR das reine JSON Array zurück, ohne Markdown-Formatierung (kein ```json).''';
 
       final text = await _requestExamImportResponse(
         prompt: prompt,
@@ -4071,14 +4075,18 @@ WICHTIG: Das Datum MUSS als String im Format YYYYMMDD ausgegeben werden. Fehlt d
         loadingVisible = false;
       }
 
-      final jsonStart = text.indexOf('[');
-      final jsonEnd = text.lastIndexOf(']');
+      final cleanText = text.replaceAll('```json', '').replaceAll('```', '').trim();
+      final jsonStart = cleanText.indexOf('[');
+      final jsonEnd = cleanText.lastIndexOf(']');
       if (jsonStart != -1 && jsonEnd != -1) {
-        final jsonStr = text.substring(jsonStart, jsonEnd + 1);
-        final decoded = jsonDecode(jsonStr);
-        if (decoded is! List) {
-          throw Exception('API: ${l.examsImportInvalidJson}');
+        final jsonStr = cleanText.substring(jsonStart, jsonEnd + 1);
+        List<dynamic> decoded;
+        try {
+          decoded = jsonDecode(jsonStr);
+        } catch (e) {
+          throw Exception('Fehler beim Parsen der AI-Antwort: $e');
         }
+        
         final exams = decoded
             .whereType<Map>()
             .map((e) => Map<String, dynamic>.from(e))
@@ -4160,14 +4168,10 @@ WICHTIG: Das Datum MUSS als String im Format YYYYMMDD ausgegeben werden. Fehlt d
     final todayInt = int.parse(DateFormat('yyyyMMdd').format(DateTime.now()));
 
     final upcoming = exams
-        .where(
-          (e) => (int.tryParse(e['date']?.toString() ?? '') ?? 0) >= todayInt,
-        )
+        .where((e) => _parseExamDate(e) >= todayInt)
         .toList();
     final past = exams
-        .where(
-          (e) => (int.tryParse(e['date']?.toString() ?? '') ?? 0) < todayInt,
-        )
+        .where((e) => _parseExamDate(e) < todayInt)
         .toList();
 
     return Scaffold(
@@ -4189,21 +4193,7 @@ WICHTIG: Das Datum MUSS als String im Format YYYYMMDD ausgegeben werden. Fehlt d
           ),
         ],
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'exams_chat_fab',
-        onPressed: () {
-          Navigator.of(context).push(
-            _buildBouncyRoute(const AiAssistantPage()),
-          );
-        },
-        icon: const Icon(Icons.chat_bubble_outline_rounded),
-        label: Text(
-          appLocaleNotifier.value.toLowerCase().startsWith('de')
-              ? 'Prüfungen besprechen'
-              : 'Discuss exams',
-        ),
-      ),
+
       body: _AnimatedBackground(
         child: RefreshIndicator(
           onRefresh: _refreshExams,
@@ -4579,6 +4569,9 @@ MORGEN:
 
 STUNDENPLAN DIESE WOCHE:
 [timetable]
+
+HAUSAUFGABEN:
+[homeworks]
 
 PRUEFUNGEN:
 [exams]

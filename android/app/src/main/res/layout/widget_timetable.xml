@@ -12,37 +12,30 @@
         android:id="@+id/widget_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Nächste Stunde"
+        android:text="Nächste Stunden"
         android:textColor="#888888"
         android:textSize="12sp"
         android:textStyle="bold" />
 
-    <TextView
-        android:id="@+id/widget_subject"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:text="Frei"
-        android:textColor="#000000"
-        android:textSize="22sp"
-        android:textStyle="bold" />
+    <!-- Lesson 1 -->
+    <LinearLayout android:id="@+id/lesson1" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginTop="4dp">
+        <TextView android:id="@+id/widget_subject" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Frei" android:textColor="#000000" android:textSize="18sp" android:textStyle="bold" />
+        <TextView android:id="@+id/widget_time" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="--:--" android:textColor="#333333" android:textSize="12sp" />
+        <TextView android:id="@+id/widget_room" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="" android:textColor="#555555" android:textSize="12sp" />
+    </LinearLayout>
 
-    <TextView
-        android:id="@+id/widget_time"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:text="--:--"
-        android:textColor="#333333"
-        android:textSize="14sp" />
+    <!-- Lesson 2 -->
+    <LinearLayout android:id="@+id/lesson2" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginTop="8dp">
+        <TextView android:id="@+id/widget_subject2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="" android:textColor="#000000" android:textSize="18sp" android:textStyle="bold" />
+        <TextView android:id="@+id/widget_time2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="" android:textColor="#333333" android:textSize="12sp" />
+        <TextView android:id="@+id/widget_room2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="" android:textColor="#555555" android:textSize="12sp" />
+    </LinearLayout>
 
-    <TextView
-        android:id="@+id/widget_room"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:text=""
-        android:textColor="#555555"
-        android:textSize="14sp" />
+    <!-- Lesson 3 -->
+    <LinearLayout android:id="@+id/lesson3" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginTop="8dp">
+        <TextView android:id="@+id/widget_subject3" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="" android:textColor="#000000" android:textSize="18sp" android:textStyle="bold" />
+        <TextView android:id="@+id/widget_time3" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="" android:textColor="#333333" android:textSize="12sp" />
+        <TextView android:id="@+id/widget_room3" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="" android:textColor="#555555" android:textSize="12sp" />
+    </LinearLayout>
 
 </LinearLayout>

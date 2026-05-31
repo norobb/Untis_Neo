@@ -40,15 +40,15 @@ android {
     signingConfigs {
         create("release") {
             storeFile = file("release-key.jks")
-            storePassword = localProperties.getProperty("ANDROID_KEYSTORE_PASSWORD")
-            keyAlias = localProperties.getProperty("ANDROID_KEY_ALIAS")
-            keyPassword = localProperties.getProperty("ANDROID_KEY_PASSWORD")
+            storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD") ?: localProperties.getProperty("ANDROID_KEYSTORE_PASSWORD")
+            keyAlias = System.getenv("ANDROID_KEY_ALIAS") ?: localProperties.getProperty("ANDROID_KEY_ALIAS")
+            keyPassword = System.getenv("ANDROID_KEY_PASSWORD") ?: localProperties.getProperty("ANDROID_KEY_PASSWORD")
         }
     }
 
     buildTypes {
         getByName("release") {
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
         }
         getByName("debug") {
             signingConfig = signingConfigs.getByName("debug")

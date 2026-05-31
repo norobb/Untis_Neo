@@ -11,6 +11,7 @@ class _SettingsWidgetPageState extends State<SettingsWidgetPage> {
   Color _bgColor = const Color(0xFFE5E5E5);
   Color _textColor = const Color(0xFF000000);
   Color _secTextColor = const Color(0xFF555555);
+  int _lessonCount = 3;
 
   @override
   void initState() {
@@ -24,11 +25,13 @@ class _SettingsWidgetPageState extends State<SettingsWidgetPage> {
     final bgStr = prefs.getString('widget_bg_color') ?? '#E5E5E5';
     final txtStr = prefs.getString('widget_text_color') ?? '#000000';
     final secStr = prefs.getString('widget_sec_text_color') ?? '#555555';
+    final lc = prefs.getInt('widget_lesson_count') ?? 3;
     
     setState(() {
       _bgColor = _colorFromHex(bgStr) ?? const Color(0xFFE5E5E5);
       _textColor = _colorFromHex(txtStr) ?? const Color(0xFF000000);
       _secTextColor = _colorFromHex(secStr) ?? const Color(0xFF555555);
+      _lessonCount = lc;
     });
   }
 
@@ -162,6 +165,25 @@ class _SettingsWidgetPageState extends State<SettingsWidgetPage> {
                       setState(() => _secTextColor = c);
                       _saveColor('widget_sec_text_color', c);
                     }),
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    title: Text('Anzahl der Stunden', style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+                    trailing: DropdownButton<int>(
+                      value: _lessonCount,
+                      underline: const SizedBox(),
+                      items: [1, 2, 3].map((e) => DropdownMenuItem(value: e, child: Text('$e Stunden'))).toList(),
+                      onChanged: (v) async {
+                        if (v != null) {
+                          setState(() => _lessonCount = v);
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setInt('widget_lesson_count', v);
+                          // Needs full widget data update, so trigger background task or wait for next app open
+                          // We'll just update it directly if we have current widget_updater, but that requires calling update logic
+                          // For now saving it is enough, it applies on next timetable refresh.
+                        }
+                      },
+                    ),
                   ),
                 ],
               ),

@@ -1398,7 +1398,6 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
   Widget _buildBody(ColorScheme cs) {
     return Column(
       children: [
-        _buildContextBanner(cs),
         if (_messages.isNotEmpty) _buildChipRow(cs),
         Expanded(
           child: _messages.isEmpty
@@ -1466,7 +1465,7 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
 
     if (_loading) {
       return Scaffold(
-        backgroundColor: Colors.transparent,
+        backgroundColor: cs.surface,
         appBar: RoundedBlurAppBar(
           title: Text(l.aiTitle),
           leading: IconButton(
@@ -1479,7 +1478,7 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: cs.surface,
       appBar: RoundedBlurAppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),

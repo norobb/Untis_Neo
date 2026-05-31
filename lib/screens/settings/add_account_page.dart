@@ -143,12 +143,14 @@ class _AddAccountPageState extends State<AddAccountPage> {
         centerTitle: true,
       ),
       body: _AnimatedBackground(
-        child: ListView(
+        child: AutofillGroup(
+          child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
             if (!_manualSchoolEntry) ...[
               TextField(
                 onChanged: _onSearchChanged,
+                textInputAction: TextInputAction.search,
                 decoration: InputDecoration(
                   labelText: 'Schule suchen',
                   prefixIcon: const Icon(Icons.search_rounded),
@@ -181,6 +183,7 @@ class _AddAccountPageState extends State<AddAccountPage> {
             ] else ...[
               TextField(
                 controller: _serverController,
+                textInputAction: TextInputAction.next,
                 decoration: InputDecoration(
                   labelText: 'Server-URL',
                   filled: true,
@@ -193,6 +196,7 @@ class _AddAccountPageState extends State<AddAccountPage> {
               const SizedBox(height: 16),
               TextField(
                 controller: _schoolController,
+                textInputAction: TextInputAction.next,
                 decoration: InputDecoration(
                   labelText: 'Schulname (Login)',
                   filled: true,
@@ -205,6 +209,8 @@ class _AddAccountPageState extends State<AddAccountPage> {
               const SizedBox(height: 16),
               TextField(
                 controller: _userController,
+                autofillHints: const [AutofillHints.username],
+                textInputAction: TextInputAction.next,
                 decoration: InputDecoration(
                   labelText: 'Benutzername',
                   filled: true,
@@ -218,6 +224,11 @@ class _AddAccountPageState extends State<AddAccountPage> {
               TextField(
                 controller: _passwordController,
                 obscureText: true,
+                autofillHints: const [AutofillHints.password],
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) {
+                  if (!_isLogginIn) _login();
+                },
                 decoration: InputDecoration(
                   labelText: 'Passwort',
                   filled: true,
@@ -244,6 +255,7 @@ class _AddAccountPageState extends State<AddAccountPage> {
               ),
             ],
           ],
+        ),
         ),
       ),
     );

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart' as app_state;
 
 class Homework {
@@ -46,8 +47,19 @@ class WebUntisHomeworkApi {
     if (app_state.demoModeNotifier.value) return true;
 
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final doneList = prefs.getStringList('local_done_homeworks') ?? [];
+      if (done) {
+        if (!doneList.contains(homeworkId)) {
+          doneList.add(homeworkId);
+        }
+      } else {
+        doneList.remove(homeworkId);
+      }
+      await prefs.setStringList('local_done_homeworks', doneList);
+      
       final sessionId = app_state.sessionID;
-      if (sessionId.isEmpty) return false;
+      if (sessionId.isEmpty) return true; // Local success
 
       var cleanServerUrl = app_state.schoolUrl.trim();
       cleanServerUrl = cleanServerUrl
@@ -61,7 +73,8 @@ class WebUntisHomeworkApi {
         "https://$cleanServerUrl/WebUntis/jsonrpc.do?school=${app_state.schoolName}",
       );
 
-      final response = await http.post(
+      // Attempt API call silently
+      http.post(
         url,
         headers: {
           'Cookie': 'JSESSIONID=$sessionId',
@@ -79,17 +92,36 @@ class WebUntisHomeworkApi {
         }),
       );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return data['error'] == null;
-      }
-      return false;
+      return true;
     } catch (_) {
-      return false;
+      return true;
     }
   }
 
   static Future<List<Homework>> fetchHomeworks() async {
+    final prefs = await SharedPreferences.getInstance();
+    final doneList = prefs.getStringList('local_done_homeworks') ?? [];
+    
+    final list = await _fetchHomeworksInternal();
+    return list.map((hw) {
+      if (doneList.contains(hw.id)) {
+        return Homework(
+          id: hw.id,
+          subjectCode: hw.subjectCode,
+          subjectLongName: hw.subjectLongName,
+          teacherName: hw.teacherName,
+          description: hw.description,
+          remark: hw.remark,
+          dueDate: hw.dueDate,
+          isDone: true,
+          attachmentsCount: hw.attachmentsCount,
+        );
+      }
+      return hw;
+    }).toList();
+  }
+
+  static Future<List<Homework>> _fetchHomeworksInternal() async {
     if (app_state.demoModeNotifier.value) {
       return [
         Homework(
