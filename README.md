@@ -1,5 +1,8 @@
 # UntisPlus (Neo Edition)
 
+> [!IMPORTANT]
+> **Für KI-Assistenten und Contributor:** Bitte lest vor jeglichen Änderungen die Datei [`ai.md`](ai.md) im Stammverzeichnis. Diese `README.md` und die `ai.md` müssen bei architektonischen Änderungen stets aktuell gehalten werden!
+
 ![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)
 ![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)
 

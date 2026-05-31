@@ -133,6 +133,7 @@ class _SettingsWidgetPageState extends State<SettingsWidgetPage> {
                 children: [
                   ListTile(
                     title: Text('Hintergrundfarbe', style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+                    subtitle: Text('Farbe für den Hintergrund des Widgets', style: GoogleFonts.outfit()),
                     trailing: Container(
                       width: 32, height: 32,
                       decoration: BoxDecoration(color: _bgColor, shape: BoxShape.circle, border: Border.all(color: Colors.grey)),
@@ -145,6 +146,7 @@ class _SettingsWidgetPageState extends State<SettingsWidgetPage> {
                   const Divider(height: 1),
                   ListTile(
                     title: Text('Haupttext (Fach & Zeit)', style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+                    subtitle: Text('Farbe für Fachnamen und Uhrzeiten', style: GoogleFonts.outfit()),
                     trailing: Container(
                       width: 32, height: 32,
                       decoration: BoxDecoration(color: _textColor, shape: BoxShape.circle, border: Border.all(color: Colors.grey)),
@@ -157,6 +159,7 @@ class _SettingsWidgetPageState extends State<SettingsWidgetPage> {
                   const Divider(height: 1),
                   ListTile(
                     title: Text('Nebentext (Raum & Titel)', style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+                    subtitle: Text('Farbe für Räume und Überschriften', style: GoogleFonts.outfit()),
                     trailing: Container(
                       width: 32, height: 32,
                       decoration: BoxDecoration(color: _secTextColor, shape: BoxShape.circle, border: Border.all(color: Colors.grey)),
@@ -169,6 +172,7 @@ class _SettingsWidgetPageState extends State<SettingsWidgetPage> {
                   const Divider(height: 1),
                   ListTile(
                     title: Text('Anzahl der Stunden', style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+                    subtitle: Text('Wie viele Stunden maximal angezeigt werden', style: GoogleFonts.outfit()),
                     trailing: DropdownButton<int>(
                       value: _lessonCount,
                       underline: const SizedBox(),
@@ -178,9 +182,6 @@ class _SettingsWidgetPageState extends State<SettingsWidgetPage> {
                           setState(() => _lessonCount = v);
                           final prefs = await SharedPreferences.getInstance();
                           await prefs.setInt('widget_lesson_count', v);
-                          // Needs full widget data update, so trigger background task or wait for next app open
-                          // We'll just update it directly if we have current widget_updater, but that requires calling update logic
-                          // For now saving it is enough, it applies on next timetable refresh.
                         }
                       },
                     ),

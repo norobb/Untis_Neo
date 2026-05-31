@@ -536,6 +536,7 @@ class _WeeklyTimetablePageState extends State<WeeklyTimetablePage>
   String? _tempSessionId;
   int? _viewingClassId;
   String? _viewingClassName;
+  List<Homework> _homeworks = [];
 
   String get _currentSessionId =>
       (_viewingClassId != null && _tempSessionId != null)
@@ -967,6 +968,13 @@ class _WeeklyTimetablePageState extends State<WeeklyTimetablePage>
     (lesson['endTime'] as int?) ??
         (((lesson['startTime'] as int?) ?? 800) + 45),
   );
+
+  bool _lessonHasHomework(Map<dynamic, dynamic> lesson) {
+    final lDate = lesson['date']?.toString() ?? '';
+    final lSubj = lesson['_subjectShort']?.toString() ?? '';
+    if (lDate.isEmpty || lSubj.isEmpty) return false;
+    return _homeworks.any((hw) => hw.dueDate == lDate && hw.subjectCode == lSubj && !hw.isDone);
+  }
 
   static String _norm(dynamic value) => value?.toString().trim() ?? '';
 
@@ -1750,20 +1758,37 @@ class _WeeklyTimetablePageState extends State<WeeklyTimetablePage>
                                         CrossAxisAlignment.start,
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Text(
-                                        subject,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: GoogleFonts.outfit(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w800,
-                                          color: fgColor,
-                                          decoration: isCancelled
-                                              ? TextDecoration.lineThrough
-                                              : null,
-                                          decorationColor: fgColor,
-                                          decorationThickness: 2.0,
-                                        ),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              subject,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: GoogleFonts.outfit(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w800,
+                                                color: fgColor,
+                                                decoration: isCancelled
+                                                    ? TextDecoration.lineThrough
+                                                    : null,
+                                                decorationColor: fgColor,
+                                                decorationThickness: 2.0,
+                                              ),
+                                            ),
+                                          ),
+                                          if (_lessonHasHomework(l))
+                                            Padding(
+                                              padding: const EdgeInsets.only(left: 2),
+                                              child: Icon(
+                                                Icons.assignment_outlined,
+                                                size: 13,
+                                                color: fgColor,
+                                              ),
+                                            ),
+                                        ],
                                       ),
                                       if (height >= 32 && teacher.isNotEmpty)
                                         Text(
@@ -2377,7 +2402,13 @@ class _WeeklyTimetablePageState extends State<WeeklyTimetablePage>
     final hasCachedWeek = cachedWeek != null;
     if (hasCachedWeek && mounted) {
       _applyKnownSubjectsFromWeek(cachedWeek);
+      List<Homework> hw = [];
+      try {
+        hw = await WebUntisHomeworkApi.fetchHomeworks();
+      } catch (_) {}
+      if (!mounted) return;
       setState(() {
+        _homeworks = hw;
         _weekData = cachedWeek;
         _showingCachedWeek = true;
         _loading = false;
@@ -2743,8 +2774,14 @@ class _WeeklyTimetablePageState extends State<WeeklyTimetablePage>
       );
       await updateHomescreenWidget();
 
+      List<Homework> hw = [];
+      try {
+        hw = await WebUntisHomeworkApi.fetchHomeworks();
+      } catch (_) {}
+
       if (!mounted) return;
       setState(() {
+        _homeworks = hw;
         _weekData = tempWeek;
         _showingCachedWeek = false;
         _loading = false;

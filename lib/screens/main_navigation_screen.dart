@@ -1808,7 +1808,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           ),
           MediaQuery(
             data: mq.copyWith(
-              padding: mq.padding.copyWith(bottom: mq.padding.bottom + 104),
+              padding: mq.padding.copyWith(
+                  bottom: mq.padding.bottom + 104,
+              ),
             ),
             child: IndexedStack(index: _selectedIndex, children: _pages),
           ),
@@ -1841,12 +1843,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               ),
             ),
           // Floating nav bar
-          if (_selectedIndex != 6)
-            Positioned(
-              left: 16,
-              right: 16,
-              bottom: mq.padding.bottom + 16,
-              child: ValueListenableBuilder<String>(
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: mq.padding.bottom + 16,
+            child: ValueListenableBuilder<String>(
                 valueListenable: appLocaleNotifier,
                 builder: (context, locale, _) {
                   return _buildFloatingNavBar(context, cs);
@@ -2185,10 +2186,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         duration: const Duration(milliseconds: 320),
         curve: _kSoftBounce,
         height: 48,
+        clipBehavior: Clip.antiAlias,
         padding: EdgeInsets.symmetric(horizontal: selected ? 16 : 12),
         decoration: BoxDecoration(
           color: selected ? cs.primaryContainer : Colors.transparent,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(100),
           border: tutorialHighlight
               ? Border.all(color: cs.tertiary, width: 2)
               : selected
