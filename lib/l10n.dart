@@ -600,6 +600,9 @@ class AppL10n {
       'timetableSelectAnother': 'Andere Klasse',
       'timetableNoClassesFound':
           'Keine Klassen gefunden oder Zugriff verweigert.',
+      'timetableExportCalendar': 'In Kalender exportieren',
+      'timetableExportSuccess': 'Export erfolgreich!',
+      'timetableExportFailed': 'Export fehlgeschlagen: ',
       'freeRoomsTitle': 'Freie Räume',
       'freeRoomsSelectTime': 'Zeitraum wählen',
       'freeRoomsNoneFound': 'Keine freien Räume in diesem Zeitraum gefunden.',
@@ -1124,6 +1127,9 @@ Use "useThemeColors": true unless the prompt asks for specific colors.
       'timetableMyTimetable': 'My timetable',
       'timetableSelectAnother': 'Another class',
       'timetableNoClassesFound': 'No classes found or access denied.',
+      'timetableExportCalendar': 'Export to calendar',
+      'timetableExportSuccess': 'Export successful!',
+      'timetableExportFailed': 'Export failed: ',
       'freeRoomsTitle': 'Free Rooms',
       'freeRoomsSelectTime': 'Select time range',
       'freeRoomsNoneFound': 'No free rooms found for this time range.',
@@ -1639,6 +1645,9 @@ Use "useThemeColors": true unless the prompt asks for specific colors.
       'timetableMyTimetable': 'Mon emploi du temps',
       'timetableSelectAnother': 'Autre classe',
       'timetableNoClassesFound': 'Aucune classe trouvée ou accès refusé.',
+      'timetableExportCalendar': 'Exporter vers l\'agenda',
+      'timetableExportSuccess': 'Export réussi !',
+      'timetableExportFailed': 'Échec de l\'exportation : ',
       'freeRoomsTitle': 'Salles libres',
       'freeRoomsSelectTime': 'Choisir une plage horaire',
       'freeRoomsNoneFound':
@@ -2127,6 +2136,9 @@ Use "useThemeColors": true unless the prompt asks for specific colors.
       'timetableMyTimetable': 'Mi horario',
       'timetableSelectAnother': 'Otra clase',
       'timetableNoClassesFound': 'No se encontraron clases o acceso denegado.',
+      'timetableExportCalendar': 'Exportar al calendario',
+      'timetableExportSuccess': 'Exportación exitosa',
+      'timetableExportFailed': 'Error al exportar: ',
       'freeRoomsTitle': 'Aulas libres',
       'freeRoomsSelectTime': 'Elegir franja horaria',
       'freeRoomsNoneFound':
@@ -2616,6 +2628,9 @@ Use "useThemeColors": true unless the prompt asks for specific colors.
       'timetableSelectAnother': 'Άλλη τάξη',
       'timetableNoClassesFound':
           'Δεν βρέθηκαν τάξεις ή η πρόσβαση απορρίφθηκε.',
+      'timetableExportCalendar': 'Εξαγωγή στο ημερολόγιο',
+      'timetableExportSuccess': 'Επιτυχής εξαγωγή!',
+      'timetableExportFailed': 'Αποτυχία εξαγωγής: ',
       'freeRoomsTitle': 'Ελεύθερες αίθουσες',
       'freeRoomsSelectTime': 'Επιλογή χρονικού διαστήματος',
       'freeRoomsNoneFound':
