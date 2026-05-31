@@ -52,7 +52,7 @@ jobs:
         if: env.ANDROID_KEYSTORE_BASE64 != ''
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-        run: echo $ANDROID_KEYSTORE_BASE64 | base64 -d > android/app/release-key.jks
+        run: echo "$ANDROID_KEYSTORE_BASE64" | base64 -d -i > android/app/release-key.jks
 
       - name: Build Android APK
         env:
