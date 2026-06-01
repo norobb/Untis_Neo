@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as original_http;
 import 'package:flutter/foundation.dart' show kIsWeb;
 
+export 'package:http/http.dart' hide get, post, Request, Client;
 Uri _proxyUri(Uri uri) {
   if (kIsWeb) {
     if (!uri.toString().contains('corsproxy.io')) {
@@ -34,4 +35,4 @@ class Client extends original_http.BaseClient {
   }
 }
 
-export 'package:http/http.dart' hide get, post, Request, Client;
+
