@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:untis_neo/http_proxy.dart' as http;
+import 'package:untisplus/http_proxy.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart' as app_state;
 

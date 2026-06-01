@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
-import 'package:untis_neo/http_proxy.dart' as http;
+import 'package:untisplus/http_proxy.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:otp_auth/otp_auth.dart';
