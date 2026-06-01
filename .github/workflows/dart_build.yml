@@ -1,0 +1,543 @@
+name: Flutter Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (leer = automatisch naechstes Minor, z.B. 3.1.0 -> 3.2.0)'
+        required: false
+        default: ''
+        type: string
+      release_name:
+        description: 'Optionaler Release-Name (leer = Tag wird verwendet)'
+        required: false
+        type: string
+      prerelease:
+        description: 'Als Pre-Release markieren'
+        required: true
+        default: false
+        type: boolean
+      draft:
+        description: 'Als Draft erstellen'
+        required: true
+        default: false
+        type: boolean
+      run_tests:
+        description: 'flutter analyze und flutter test ausfuehren'
+        required: true
+        default: true
+        type: boolean
+      build_artifacts:
+        description: 'Welche Android Artefakte bauen?'
+        required: true
+        default: 'apk'
+        type: choice
+        options:
+          - apk
+          - aab
+          - apk+aab
+          - none
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  meta:
+    name: Metadata
+    runs-on: ubuntu-latest
+    outputs:
+      release_tag: ${{ steps.meta.outputs.release_tag }}
+      release_name: ${{ steps.meta.outputs.release_name }}
+      prerelease: ${{ steps.meta.outputs.prerelease }}
+      draft: ${{ steps.meta.outputs.draft }}
+      run_tests: ${{ steps.meta.outputs.run_tests }}
+      build_apk: ${{ steps.meta.outputs.build_apk }}
+      build_aab: ${{ steps.meta.outputs.build_aab }}
+      last_semver_tag: ${{ steps.meta.outputs.last_semver_tag }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Resolve Release Metadata
+        id: meta
+        env:
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+          INPUT_RELEASE_NAME: ${{ github.event.inputs.release_name }}
+          INPUT_PRERELEASE: ${{ github.event.inputs.prerelease }}
+          INPUT_DRAFT: ${{ github.event.inputs.draft }}
+          INPUT_RUN_TESTS: ${{ github.event.inputs.run_tests }}
+          INPUT_BUILD_ARTIFACTS: ${{ github.event.inputs.build_artifacts }}
+        run: |
+          set -euo pipefail
+
+          normalize_bool() {
+            local v="${1:-}"
+            local fallback="${2:-false}"
+            if [ "$v" = "true" ] || [ "$v" = "false" ]; then
+              echo "$v"
+            else
+              echo "$fallback"
+            fi
+          }
+
+          input_tag="$(echo "${INPUT_TAG:-}" | tr -d '[:space:]')"
+
+          last_tag="$(git tag --list | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)"
+          prefix=""
+          base="0.0.0"
+          if [ -n "$last_tag" ]; then
+            if [[ "$last_tag" == v* ]]; then
+              prefix="v"
+            fi
+            base="${last_tag#v}"
+          fi
+
+          resolved_tag="$input_tag"
+          if [ -z "$resolved_tag" ]; then
+            IFS='.' read -r major minor patch <<<"$base"
+            : "${major:=0}" "${minor:=0}" "${patch:=0}"
+            minor=$((minor + 1))
+            resolved_tag="${prefix}${major}.${minor}.0"
+          fi
+
+          resolved_name="$(echo "${INPUT_RELEASE_NAME:-}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+          if [ -z "$resolved_name" ]; then
+            resolved_name="$resolved_tag"
+          fi
+
+          prerelease="$(normalize_bool "${INPUT_PRERELEASE:-}" "false")"
+          draft="$(normalize_bool "${INPUT_DRAFT:-}" "false")"
+          run_tests="$(normalize_bool "${INPUT_RUN_TESTS:-}" "true")"
+
+          build_artifacts="$(echo "${INPUT_BUILD_ARTIFACTS:-apk}" | tr -d '[:space:]')"
+          build_apk="false"
+          build_aab="false"
+          case "$build_artifacts" in
+            apk)
+              build_apk="true"
+              ;;
+            aab)
+              build_aab="true"
+              ;;
+            apk+aab)
+              build_apk="true"
+              build_aab="true"
+              ;;
+            none)
+              ;;
+            *)
+              build_apk="true"
+              ;;
+          esac
+
+          {
+            echo "release_tag=$resolved_tag"
+            echo "release_name=$resolved_name"
+            echo "prerelease=$prerelease"
+            echo "draft=$draft"
+            echo "run_tests=$run_tests"
+            echo "build_apk=$build_apk"
+            echo "build_aab=$build_aab"
+            echo "last_semver_tag=$last_tag"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "Resolved tag: $resolved_tag"
+          echo "Previous semver tag: ${last_tag:-none}"
+
+      - name: Summary
+        run: |
+          echo "### Release Metadata" >> $GITHUB_STEP_SUMMARY
+          echo "- tag: ${{ steps.meta.outputs.release_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "- name: ${{ steps.meta.outputs.release_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- prerelease: ${{ steps.meta.outputs.prerelease }}" >> $GITHUB_STEP_SUMMARY
+          echo "- draft: ${{ steps.meta.outputs.draft }}" >> $GITHUB_STEP_SUMMARY
+          echo "- run_tests: ${{ steps.meta.outputs.run_tests }}" >> $GITHUB_STEP_SUMMARY
+          echo "- build_apk: ${{ steps.meta.outputs.build_apk }}" >> $GITHUB_STEP_SUMMARY
+          echo "- build_aab: ${{ steps.meta.outputs.build_aab }}" >> $GITHUB_STEP_SUMMARY
+          echo "- latest_semver_tag: ${{ steps.meta.outputs.last_semver_tag }}" >> $GITHUB_STEP_SUMMARY
+
+  quality_checks:
+    name: Analyse & Tests
+    runs-on: ubuntu-latest
+    needs: meta
+    if: ${{ needs.meta.outputs.run_tests == 'true' }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+      - name: Install Dependencies
+        run: flutter pub get
+      - name: Analyze & Test
+        run: |
+          flutter analyze --no-fatal-infos
+          flutter test
+
+  build_apk:
+    name: Build APK
+    runs-on: ubuntu-latest
+    needs: [meta, quality_checks]
+    if: ${{ always() && needs.meta.outputs.build_apk == 'true' && needs.meta.result == 'success' && (needs.quality_checks.result == 'success' || needs.quality_checks.result == 'skipped') }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+      - name: Install Dependencies
+        run: flutter pub get
+      - name: Build Android APK
+        run: flutter build apk --release
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+
+  build_aab:
+    name: Build AAB
+    runs-on: ubuntu-latest
+    needs: [meta, quality_checks]
+    if: ${{ always() && needs.meta.outputs.build_aab == 'true' && needs.meta.result == 'success' && (needs.quality_checks.result == 'success' || needs.quality_checks.result == 'skipped') }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+      - name: Install Dependencies
+        run: flutter pub get
+      - name: Build Android AAB
+        run: flutter build appbundle --release
+      - name: Upload AAB Artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: release-aab
+          path: build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+
+  release_notes:
+    name: Gemini Release Notes
+    runs-on: ubuntu-latest
+    needs: [meta, quality_checks]
+    if: ${{ always() && needs.meta.result == 'success' && (needs.quality_checks.result == 'success' || needs.quality_checks.result == 'skipped') }}
+    outputs:
+      has_ai_notes: ${{ steps.ai_notes.outputs.has_ai_notes }}
+      ai_reason: ${{ steps.ai_notes.outputs.ai_reason }}
+      gemini_used_model: ${{ steps.ai_notes.outputs.gemini_used_model }}
+      gemini_block_reason: ${{ steps.ai_notes.outputs.gemini_block_reason }}
+      gemini_finish_reason: ${{ steps.ai_notes.outputs.gemini_finish_reason }}
+      gemini_response_snippet: ${{ steps.ai_notes.outputs.gemini_response_snippet }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Generate Gemini Release Notes
+        id: ai_notes
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: gemini-2.5-flash
+          GEMINI_FALLBACK_MODEL: gemini-2.5-flash-lite
+          RELEASE_TAG: ${{ needs.meta.outputs.release_tag }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "$GEMINI_API_KEY" ]; then
+            echo "No GEMINI_API_KEY configured. Falling back to GitHub generated notes."
+            echo "has_ai_notes=false" >> $GITHUB_OUTPUT
+            echo "ai_reason=missing_api_key" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          APP_VERSION=$(grep -E '^version:\s*' pubspec.yaml | head -n 1 | sed -E 's/^version:\s*//')
+          if [ -z "${APP_VERSION:-}" ]; then
+            APP_VERSION="unknown"
+          fi
+
+          PREV_TAG=$(git tag --sort=-creatordate | grep -Fxv "$RELEASE_TAG" | head -n 1 || true)
+
+          REPO_SLUG="${GITHUB_REPOSITORY:-}"
+          if [ -n "$REPO_SLUG" ] && [ -n "$PREV_TAG" ]; then
+            COMPARE_URL="https://github.com/${REPO_SLUG}/compare/${PREV_TAG}...${RELEASE_TAG}"
+          elif [ -n "$REPO_SLUG" ]; then
+            COMPARE_URL="https://github.com/${REPO_SLUG}/commits/${GITHUB_SHA:-HEAD}"
+          else
+            COMPARE_URL=""
+          fi
+
+          if [ -n "$PREV_TAG" ]; then
+            RANGE="$PREV_TAG..HEAD"
+            COMMIT_COUNT=$(git rev-list --count "$RANGE" 2>/dev/null || echo "0")
+            COMMITS=$(git log "$RANGE" -n 80 --no-merges --pretty=format:'- %s (%h)' --name-only)
+            CHANGED_FILES=$(git diff --name-only "$RANGE" | head -n 220 || true)
+          else
+            COMMIT_COUNT=$(git rev-list --max-count=80 --count HEAD 2>/dev/null || echo "0")
+            COMMITS=$(git log -n 80 --no-merges --pretty=format:'- %s (%h)' --name-only)
+            CHANGED_FILES=$(git log -n 80 --no-merges --name-only --pretty=format:'' | sed '/^$/d' | sort -u | head -n 220 || true)
+          fi
+
+          if [ -z "${COMMITS//[[:space:]]/}" ]; then
+            COMMITS='- No commit messages found.'
+          fi
+
+          if [ -z "${CHANGED_FILES//[[:space:]]/}" ]; then
+            CHANGED_FILES='(none)'
+          fi
+
+          PROMPT=$(cat <<'EOF'
+           You are a release manager writing release notes for a Flutter app.
+           Your job: produce detailed, high-signal release notes that are still honest.
+
+           Hard rules:
+           - Output in English.
+           - Output valid Markdown only.
+           - Use ONLY information that is inferable from the provided commits and file paths.
+           - If something is unclear, explicitly say it's "likely" / "may" / "internal" and avoid guessing.
+           - Do NOT invent features, UI changes, or bug fixes.
+           - Do NOT mention this prompt or your reasoning.
+
+           Tone:
+           - Friendly and practical.
+           - I am a sole hobby developer (not a company). Write accordingly.
+           - Emojis are allowed sparingly (max ~5 total).
+
+           Output format (keep exactly this order):
+           1) Title line: "Release <tag>" (and include app version if provided).
+           2) One short summary paragraph (2–4 sentences) describing who benefits and what changed.
+           3) Sections with H2 headings:
+             - Highlights (3–7 bullets, user-facing, highest impact first)
+             - What's New (new capabilities / screens / flows; user-facing)
+             - Improvements (UX, clarity, polish, refactors that affect behavior)
+             - Fixes (bugs; include the symptom and where it occurred if inferable)
+             - Performance & Reliability (if inferable)
+             - Technical Notes (advanced users/devs; mention modules/areas, migrations, config)
+           4) A final "Full Changelog" line with a link if a compare URL is provided.
+
+           Bullet guidelines:
+           - Each bullet should be 1–2 lines, start with a verb, and include context (screen/feature/module) when possible.
+           - Prefer concrete descriptions ("Improved timetable refresh"), not vague ones ("Various changes").
+           - If a change is purely internal, keep it in Technical Notes and label it "Internal".
+           - If there are no user-visible changes, say so explicitly and focus on Technical Notes.
+          - Rewrite commit messages into release-note wording; do not copy them verbatim.
+          - Do not include raw commit hashes in the output.
+          - Avoid filler bullets like "chore"/"misc" unless they have a clear user impact.
+
+           Only return the final release notes.
+          EOF
+          )
+
+          PAYLOAD=$(jq -n \
+            --arg prompt "$PROMPT" \
+            --arg tag "$RELEASE_TAG" \
+            --arg prev_tag "${PREV_TAG:-}" \
+            --arg app_version "$APP_VERSION" \
+            --arg commit_count "$COMMIT_COUNT" \
+            --arg compare_url "$COMPARE_URL" \
+            --arg changed_files "$CHANGED_FILES" \
+            --arg commits "$COMMITS" \
+            '{
+              contents: [
+                {
+                  role: "user",
+                  parts: [
+                    {
+                      text: (
+                        $prompt +
+                        "\n\nContext:" +
+                        "\n- Release tag: " + $tag +
+                        "\n- App version (pubspec.yaml): " + $app_version +
+                        "\n- Previous tag (if any): " + (if ($prev_tag | length) > 0 then $prev_tag else "(none)" end) +
+                        "\n- Commit count in range: " + $commit_count +
+                        (if ($compare_url | length) > 0 then "\n- Compare URL: " + $compare_url else "" end) +
+                        "\n\nChanged files (for scoping; may be truncated):\n" + $changed_files +
+                        "\n\nCommits (subject + touched files; may be truncated):\n" + $commits
+                      )
+                    }
+                  ]
+                }
+              ],
+              generationConfig: {
+                temperature: 0.2,
+                responseMimeType: "text/plain"
+              }
+            }')
+
+          request_model() {
+            local model="$1"
+            curl -sS "https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}" \
+              -H "Content-Type: application/json" \
+              -d "$PAYLOAD"
+          }
+
+          extract_body() {
+            jq -r '[
+              (.candidates[0].content.parts // [] | map(.text // empty) | join("\n")),
+              (.candidates // [] | map(.output_text // empty) | join("\n")),
+              (.text // empty)
+            ] | map(select(length > 0)) | .[0] // empty'
+          }
+
+          RESPONSE=$(request_model "$GEMINI_MODEL")
+          API_ERROR=$(echo "$RESPONSE" | jq -r '.error.message // empty')
+          BODY=$(echo "$RESPONSE" | extract_body)
+
+          USED_MODEL="$GEMINI_MODEL"
+          if [ -n "$API_ERROR" ] || [ -z "$BODY" ]; then
+            echo "Primary Gemini attempt failed (model=${GEMINI_MODEL}). Trying fallback model ${GEMINI_FALLBACK_MODEL}."
+            RESPONSE=$(request_model "$GEMINI_FALLBACK_MODEL")
+            API_ERROR=$(echo "$RESPONSE" | jq -r '.error.message // empty')
+            BODY=$(echo "$RESPONSE" | extract_body)
+            USED_MODEL="$GEMINI_FALLBACK_MODEL"
+          fi
+
+          BLOCK_REASON=$(echo "$RESPONSE" | jq -r '.promptFeedback.blockReason // empty')
+          FINISH_REASON=$(echo "$RESPONSE" | jq -r '.candidates[0].finishReason // empty')
+          RESPONSE_SNIPPET=$(echo "$RESPONSE" | jq -c '{error: .error, promptFeedback: .promptFeedback, finishReason: .candidates[0].finishReason}' | head -c 800)
+
+          {
+            echo "gemini_used_model=$USED_MODEL"
+            echo "gemini_block_reason=${BLOCK_REASON:-none}"
+            echo "gemini_finish_reason=${FINISH_REASON:-none}"
+            echo "gemini_response_snippet=${RESPONSE_SNIPPET:-n/a}"
+          } >> $GITHUB_OUTPUT
+
+          if [ -n "$API_ERROR" ]; then
+            echo "Gemini API returned an error: $API_ERROR"
+            echo "has_ai_notes=false" >> $GITHUB_OUTPUT
+            echo "ai_reason=gemini_api_error" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          if [ -z "$BODY" ]; then
+            echo "AI note generation failed. Falling back to GitHub generated notes."
+            echo "has_ai_notes=false" >> $GITHUB_OUTPUT
+            if [ -n "$BLOCK_REASON" ]; then
+              echo "ai_reason=gemini_blocked_${BLOCK_REASON}" >> $GITHUB_OUTPUT
+            else
+              echo "ai_reason=empty_gemini_response" >> $GITHUB_OUTPUT
+            fi
+            exit 0
+          fi
+
+          printf '%s\n' "$BODY" > gemini_release_notes.md
+
+          {
+            echo "ai_reason=success"
+            echo "has_ai_notes=true"
+          } >> $GITHUB_OUTPUT
+
+      - name: Upload Gemini Notes Artifact
+        if: ${{ steps.ai_notes.outputs.has_ai_notes == 'true' }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: gemini-release-notes
+          path: gemini_release_notes.md
+          if-no-files-found: error
+
+      - name: Release Notes Summary
+        if: always()
+        run: |
+          echo "### Gemini Release Notes" >> $GITHUB_STEP_SUMMARY
+          echo "- enabled: ${{ steps.ai_notes.outputs.has_ai_notes }}" >> $GITHUB_STEP_SUMMARY
+          echo "- reason: ${{ steps.ai_notes.outputs.ai_reason }}" >> $GITHUB_STEP_SUMMARY
+          echo "- model_used: ${{ steps.ai_notes.outputs.gemini_used_model }}" >> $GITHUB_STEP_SUMMARY
+          echo "- block_reason: ${{ steps.ai_notes.outputs.gemini_block_reason }}" >> $GITHUB_STEP_SUMMARY
+          echo "- finish_reason: ${{ steps.ai_notes.outputs.gemini_finish_reason }}" >> $GITHUB_STEP_SUMMARY
+
+          if [ -n "${{ steps.ai_notes.outputs.gemini_response_snippet }}" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Response diagnostics:" >> $GITHUB_STEP_SUMMARY
+            echo '```json' >> $GITHUB_STEP_SUMMARY
+            echo "${{ steps.ai_notes.outputs.gemini_response_snippet }}" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+
+  release:
+    name: GitHub Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    needs: [meta, quality_checks, build_apk, build_aab, release_notes]
+    if: ${{ always() && needs.meta.result == 'success' && (needs.quality_checks.result == 'success' || needs.quality_checks.result == 'skipped') && (needs.build_apk.result == 'success' || needs.build_apk.result == 'skipped') && (needs.build_aab.result == 'success' || needs.build_aab.result == 'skipped') && (needs.release_notes.result == 'success' || needs.release_notes.result == 'skipped') }}
+    steps:
+      - name: Download APK Artifact
+        if: ${{ needs.meta.outputs.build_apk == 'true' }}
+        uses: actions/download-artifact@v7
+        with:
+          name: release-apk
+          path: release_assets
+
+      - name: Download AAB Artifact
+        if: ${{ needs.meta.outputs.build_aab == 'true' }}
+        uses: actions/download-artifact@v7
+        with:
+          name: release-aab
+          path: release_assets
+
+      - name: Download Gemini Notes Artifact
+        if: ${{ needs.release_notes.outputs.has_ai_notes == 'true' }}
+        uses: actions/download-artifact@v7
+        with:
+          name: gemini-release-notes
+          path: release_assets
+
+      - name: Create GitHub Release (AI Notes)
+        if: ${{ needs.release_notes.outputs.has_ai_notes == 'true' }}
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ needs.meta.outputs.release_tag }}
+          name: ${{ needs.meta.outputs.release_name }}
+          body_path: release_assets/gemini_release_notes.md
+          files: |
+            release_assets/app-release.apk
+            release_assets/app-release.aab
+          fail_on_unmatched_files: false
+          draft: ${{ needs.meta.outputs.draft == 'true' }}
+          prerelease: ${{ needs.meta.outputs.prerelease == 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Release (Fallback)
+        if: ${{ needs.release_notes.outputs.has_ai_notes != 'true' }}
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ needs.meta.outputs.release_tag }}
+          name: ${{ needs.meta.outputs.release_name }}
+          files: |
+            release_assets/app-release.apk
+            release_assets/app-release.aab
+          fail_on_unmatched_files: false
+          generate_release_notes: true
+          draft: ${{ needs.meta.outputs.draft == 'true' }}
+          prerelease: ${{ needs.meta.outputs.prerelease == 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
