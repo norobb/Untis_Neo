@@ -112,7 +112,7 @@ jobs:
         run: flutter create --platforms=web .
 
       - name: Build Web
-        run: flutter build web --release --base-href "/"
+        run: flutter build web --release --base-href "/Untis_Neo/"
 
       - name: Zip Web Build
         run: |
@@ -125,3 +125,9 @@ jobs:
           files: UntisNeo-Web.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build/web
