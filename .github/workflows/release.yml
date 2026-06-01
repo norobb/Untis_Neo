@@ -54,6 +54,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Appetize Github Action
+        uses: appetizeio/github-action-appetize@v1.0.5
+        with:
+          file_path: build/app/outputs/flutter-apk/UntisNeo.apk
+          api_token: ${{ secrets.APPETIZE_API_TOKEN }}
+
   build_windows:
     name: Build & Release Windows EXE
     runs-on: windows-latest
