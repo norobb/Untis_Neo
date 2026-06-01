@@ -12,7 +12,7 @@ import 'package:url_launcher/url_launcher_string.dart' as url_launcher;
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart' as http;
+import 'package:untis_neo/http_proxy.dart' as http;
 import 'services/webuntis_homework_api.dart';
 import 'services/webuntis_exams_api.dart';
 import 'screens/absences_page.dart';
